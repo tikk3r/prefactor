@@ -58,12 +58,13 @@ def get_obsID_from_filename(path):
     obsID = obsmatch.group(0)[1:]
     return obsID
 
-def get_SIPs_from_dataID(dpid, projectID, verbose=False):
+def get_SIP_from_dataID(dpid, projectID, verbose=False):
     global sip_cache
     xml = query.getsip_fromlta_byprojectandltadataproductid(projectID, dpid)
     new_sip = siplib.Sip.from_xml(xml)
     filename = new_sip.sip.dataProduct.fileName
-    sip_cache[filename] = new_sip        
+    sip_cache[filename] = new_sip
+    return new_sip
 
 def get_SIPs_from_obsID(obsID, projectID, verbose=False):
     if verbose:
@@ -73,7 +74,7 @@ def get_SIPs_from_obsID(obsID, projectID, verbose=False):
         print "get_SIPs_from_obsID: failed to get dataproduct-IDs for obs %s in project %s!"%(obsID, projectID)
     starttime = time.time()
     for (num,input_dpid) in enumerate(dpids):
-        get_SIPs_from_dataID(input_dpid, projectID, verbose)
+        get_SIP_from_dataID(input_dpid, projectID, verbose)
         if verbose and ((num+1)%10)==0:
             duration = time.time()-starttime
             ETA = duration/(num+1)*(len(dpids)-num-1)
@@ -85,7 +86,7 @@ def get_projectID_from_MSfile(path):
     project = t.getcell('PROJECT',0)
     return project
             
-def get_SIP_from_MSfile(path, download_if_needed=True, verbose=False):
+def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, verbose=False):
     if path[-1] == '/':
         path = path[:-1]
     filename = os.path.basename(path)
@@ -103,9 +104,15 @@ def get_SIP_from_MSfile(path, download_if_needed=True, verbose=False):
         print "Cannot find SIP for %s in cache."%(filename)
     if not download_if_needed:
         raise ValueError("Cannot find SIP in cache and download is forbidden")
-    obsID = get_obsID_from_filename(filename)
     projectID = get_projectID_from_MSfile(path)
-    get_SIPs_from_obsID(obsID, projectID, verbose)
+    if dpID_mode.upper() == "OBSID":
+        obsID = get_obsID_from_filename(filename)
+        get_SIPs_from_obsID(obsID, projectID, verbose)
+    elif dpID_mode.upper() == "LTA_NAME":
+        dpID = get_dataID_from_filename(filename, projectID, verbose)
+        get_SIP_from_dataID(dpID , projectID, verbose)
+    else:
+        raise ValueError("Unkonwn value for dpID_mode!: \""+str(dpID_mode)+"\"")
     if  sip_cache_file:
         with open(sip_cache_file,'w') as f:
             cPickle.dump(sip_cache,f,2)
