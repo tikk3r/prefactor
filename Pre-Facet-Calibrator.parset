@@ -268,11 +268,15 @@ copy_cal_npys.control.arguments          =  [source,{{ cal_values_directory }}]
 
 # download the SIPs for the input files
 # first "real" step in the pipeline, to stop the pipeline in case this fails
-download_cal_sips.control.type            =  pythonplugin
-download_cal_sips.control.executable      =  {{ download_SIPs_script }}
-download_cal_sips.control.max_per_node    =  {{ num_proc_per_node_limit }}
-download_cal_sips.control.error_tolerance =  {{ error_tolerance }}
-download_cal_sips.argument.flags          =  []
+download_cal_sips.control.type                =  pythonplugin
+download_cal_sips.control.executable          =  {{ download_SIPs_script }}
+download_cal_sips.control.max_per_node        =  {{ num_proc_per_node_limit }}
+download_cal_sips.control.error_tolerance     =  {{ error_tolerance }}
+download_cal_sips.argument.flags              =  [createmap_cal.output.mapfile]
+download_cal_sips.argument.dpID_mode          =  "obsID"
+download_cal_sips.argument.outdir             =  input.output.working_directory/input.output.job_name
+download_cal_sips.argument.download_if_needed =  True
+download_cal_sips.argument.verbose            =  False
 
 # combine all SIP-file entries into one mapfile
 combine_cal_sips_map.control.kind            =   plugin
@@ -280,9 +284,9 @@ combine_cal_sips_map.control.type            =   createMapfile
 combine_cal_sips_map.control.method          =   mapfile_all_to_one
 combine_cal_sips_map.control.mapfile_dir     =   input.output.mapfile_dir
 combine_cal_sips_map.control.filename        =   combine_cal_sips_map.mapfile
-combine_cal_sips_map.control.mapfile_in      =   download_cal_sips.output.mapfile
+combine_cal_sips_map.control.mapfile_in      =   download_cal_sips.output.MOMsip.mapfile
 
-# copy the cal-value npys to the cal-values directory
+# copy the cal-value npys to the results directory
 copy_npys_ingest.control.kind               =  recipe
 copy_npys_ingest.control.type               =  executable_args
 copy_npys_ingest.control.executable         =  /bin/cp

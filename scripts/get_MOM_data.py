@@ -86,7 +86,7 @@ def get_projectID_from_MSfile(path):
     project = t.getcell('PROJECT',0)
     return project
             
-def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, verbose=False):
+def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, projectID=None, verbose=False):
     if path[-1] == '/':
         path = path[:-1]
     filename = os.path.basename(path)
@@ -104,7 +104,8 @@ def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, verbos
         print "Cannot find SIP for %s in cache."%(filename)
     if not download_if_needed:
         raise ValueError("Cannot find SIP in cache and download is forbidden")
-    projectID = get_projectID_from_MSfile(path)
+    if not projectID:
+        projectID = get_projectID_from_MSfile(path)
     if dpID_mode.upper() == "OBSID":
         obsID = get_obsID_from_filename(filename)
         get_SIPs_from_obsID(obsID, projectID, verbose)
@@ -124,4 +125,77 @@ def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, verbos
     print "Cannot find SIP for %s in cache after downloading SIPs for obs %s!"%(filename, obsID)
     raise ValueError("Failed to download or identify SIP!")
 
+def input2bool(invar):
+    if invar == None:
+        return None
+    if isinstance(invar, bool):
+        return invar
+    elif isinstance(invar, str):
+        if invar.upper() == 'TRUE' or invar == '1':
+            return True
+        elif invar.upper() == 'FALSE' or invar == '0':
+            return False
+        else:
+            raise ValueError('input2bool: Cannot convert string "'+invar+'" to boolean!')
+    elif isinstance(invar, int) or isinstance(invar, float):
+        return bool(invar)
+    else:
+        raise TypeError('input2bool: Unsupported data type:'+str(type(invar)))
+    
+def main(MSfile, dpID_mode="obsID", outdir=".", projectID=None, download_if_needed=True,
+         cache_file=None, verbose=False):
+    """
+    Download a SIP from MOM (or read it from the cache), write it into an 
+    xml file and return the name of the created file.
+
+    Parameters
+    ----------
+    MSfile : str
+        Filename or srm-URL of MS for which to download the SIP
+    dpID_mode : str
+        How to figure out the data-product-ID:
+        - "obsID" : Go via the "observation"-number in the name of the file
+        - "LTA_name" : Search for the file-name in the dataProductIdentifierName on the LTA
+        - "SRM" : Not yet implemented
+    outdir : str
+        Path to the directory where to store the xml file.
+    projectID : str
+        ID of the project to which the data belongs. Can be determined from the MS itself if
+        it is available. (But it may be faster to specify it here anyway.)
+    download_if_needed : bool
+        Set to False to disable downloads.
+    cache_file : str
+        Path to a cache-file with downloaded SIPs. Only way to get SIPs if download is 
+        disabled. 
+        *Warning!* Don't use if this script is run multiple times in parallel!
+    verbose : bool
+        Be more verbose.
+
+    Returns
+    -------
+    result : directory
+        python-directory with "MOMsip" : xmlPath
+    """
+    download_if_needed = input2bool(download_if_needed)
+    verbose = input2bool(verbose)
+    MSfile = MSfile.strip()
+
+    
+    if MSfile[:6] == "srm://":
+        isSRM = True
+    else:
+        isSRM = False
+
+    if cache_file:
+        init_cache(cache_file, create_if_needed=True)
+    newsip = get_SIP_from_MSfile(path, dpID_mode=dpID_mode, download_if_needed=download_if_needed,
+                                 projectID=projectID, verbose=verbose)
+    
+    # os.path.basename() also works on SRM-URLs (at least on Linux systems)
+    xmlName = os.path.basename(MSfile).split('.')[0] + ".xml"
+    xmlPath = os.path.join(outdir,xmlName)
+    newsip.save_to_file(xmlPath)
+
+    result = { 'MOMsip' : xmlPath}
+    return result
     
