@@ -9,8 +9,6 @@ import cPickle
 
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
 sip_cache = {}
 
 #sip_cache_file = '/media/scratch/test/horneff/Pipeline-Test/feedback_test/sip_cache.pkl'
@@ -60,7 +58,11 @@ def get_obsID_from_filename(path):
 
 def get_SIP_from_dataID(dpid, projectID, verbose=False):
     global sip_cache
-    xml = query.getsip_fromlta_byprojectandltadataproductid(projectID, dpid)
+    try:
+        xml = query.getsip_fromlta_byprojectandltadataproductid(projectID, dpid)
+    except:
+        ssl._create_default_https_context = ssl._create_unverified_context
+        xml = query.getsip_fromlta_byprojectandltadataproductid(projectID, dpid)
     new_sip = siplib.Sip.from_xml(xml)
     filename = new_sip.sip.dataProduct.fileName
     sip_cache[filename] = new_sip
@@ -69,7 +71,11 @@ def get_SIP_from_dataID(dpid, projectID, verbose=False):
 def get_SIPs_from_obsID(obsID, projectID, verbose=False):
     if verbose:
         print "Downloading all SIPs for \"observation\" %s in project %s."%(obsID, projectID)
-    dpids = query.getltadataproductids_fromlta_byprojectandsasid(projectID, obsID)
+    try:
+        dpids = query.getltadataproductids_fromlta_byprojectandsasid(projectID, obsID)
+    except:
+        ssl._create_default_https_context = ssl._create_unverified_context
+        dpids = query.getltadataproductids_fromlta_byprojectandsasid(projectID, obsID)
     if not dpids or len(dpids) < 1:
         print "get_SIPs_from_obsID: failed to get dataproduct-IDs for obs %s in project %s!"%(obsID, projectID)
     starttime = time.time()
