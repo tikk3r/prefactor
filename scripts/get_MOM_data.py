@@ -188,7 +188,7 @@ def main(MSfile, dpID_mode="obsID", outdir=".", projectID=None, download_if_need
 
     if cache_file:
         init_cache(cache_file, create_if_needed=True)
-    newsip = get_SIP_from_MSfile(path, dpID_mode=dpID_mode, download_if_needed=download_if_needed,
+    newsip = get_SIP_from_MSfile(MSfile, dpID_mode=dpID_mode, download_if_needed=download_if_needed,
                                  projectID=projectID, verbose=verbose)
     
     # os.path.basename() also works on SRM-URLs (at least on Linux systems)
