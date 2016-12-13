@@ -91,7 +91,7 @@ def make_InstrumentModelDP(DP_path, DP_identifier, Pipeline_identifier):
     new_DP = siplib.InstrumentModelDataProduct(
         siplib.DataProductMap(
             type="Instrument Model",
-            identifier=DP_identifier
+            identifier=DP_identifier,
             size=disk_usage(DP_path),
             filename=DP_path,
             fileformat="prefactor",
