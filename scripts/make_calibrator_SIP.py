@@ -22,7 +22,7 @@ def parset_to_bool(parset,key):
     else:
         return parset[key].getBool()
 
-def make_CalPipeline_from_parset(pipeline_name, pipeline_dentifier, ID_source,
+def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                                   starttime, duration,
                                   description_parset, input_dpids):
     """
@@ -55,14 +55,12 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_dentifier, ID_source,
                 strategydescription=description_parset['strategydescription_cal'].getString(),
                 starttime=starttime,
                 duration=duration,
-                identifier=pipeline_dentifier,
-                observation_identifier=pipeline_dentifier,
-                relations=[
-                    siplib.ProcessRelation(
-                        identifier_source=ID_source,
-                        identifier="whyisthismandatory?")],
-                parset_source=None,
-                parset_id=None
+                identifier=pipeline_identifier,
+                observation_identifier=pipeline_identifier,
+                relations=[ siplib.ProcessRelation(
+                    identifier=siplib.Identifier(id="whyisthismandatory?",source=ID_source))]
+                #parset_source=None,
+                #parset_id=None
             )
         ),
         skymodeldatabase=description_parset['skymodeldatabase_calibrator'].getString(),
@@ -94,7 +92,7 @@ def make_InstrumentModelDP(DP_path, DP_identifier, Pipeline_identifier):
             identifier=DP_identifier,
             size=disk_usage(DP_path),
             filename=DP_path,
-            fileformat="prefactor",
+            fileformat="PULP",
             process_identifier=Pipeline_identifier
         )
     )
@@ -165,8 +163,8 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
     pipeline_parset = parset.Parset(parset_path)
     product_ID = "data"+str(uuid.uuid4())
     pipeline_ID = "pipe"+str(uuid.uuid4())
-    product_identifier = siplib.Identifier(product_ID, identifier_source)
-    pipeline_identifier = siplib.Identifier(pipeline_ID, identifier_source)
+    product_identifier = siplib.Identifier(id=product_ID, source=identifier_source)
+    pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
     new_product = make_InstrumentModelDP(cal_results_path, product_identifier, pipeline_identifier)
     newsip = siplib.Sip(
         project_code=input_SIPs[0].sip.project.projectCode,
@@ -175,12 +173,14 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
         #project_telescope="LOFAR",
         project_description=input_SIPs[0].sip.project.projectDescription,
         project_coinvestigators=input_SIPs[0].sip.project.coInvestigator,
-        dataproduct = product
+        dataproduct = new_product
     )
     input_DPs = []
     for inputSIP in input_SIPs:
         newsip.add_related_dataproduct_with_history(inputSIP)
-        input_DPs.append( inputSIP.dataProduct.dataProductIdentifier )
+        input_DPs.append( siplib.Identifier(id=inputSIP.sip.dataProduct.dataProductIdentifier.identifier ,
+                                            source=inputSIP.sip.dataProduct.dataProductIdentifier.source ,
+                                            name=inputSIP.sip.dataProduct.dataProductIdentifier.name ))
     starttime = time_in_isoformat()
     duration = 'P0Y0M0DT1H'
     pipeline_parset.replace('numinstrumentmodels','1')
