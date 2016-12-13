@@ -186,5 +186,11 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
                                                 pipeline_parset, input_DPs)
     newsip.add_pipelinerun(new_pipeline)
     
+    new_xml_name = cal_results_path.rstrip('/')+".xml"
+    newsip.save_to_file(new_xml_name)
+
+    result = { "new_xml_name" : new_xml_name }
+    return result
+    
 
     
