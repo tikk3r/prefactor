@@ -146,7 +146,11 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
         path to the parset with additional information about this version of prefactor
     """
     input_SIP_files = input2strlist_nomapfile(input_SIP_list)
-    input_SIPs = [siplib.Sip.from_xml(xmlpath) for xmlpath in input_SIP_files]
+    input_SIPs = []
+    for xmlpath in input_SIP_files:
+        with open(xmlpath, 'r') as f:
+            input_SIPs.append(siplib.Sip.from_xml(f.read()))
+        f.close()
     if not os.path.exists(cal_results_path):
         raise ValueError('make_calibrator_SIP: invalid cal_results_path')
     if len(input_SIPs) <= 0:
@@ -165,12 +169,12 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
     pipeline_identifier = siplib.Identifier(pipeline_ID, identifier_source)
     new_product = make_InstrumentModelDP(cal_results_path, product_identifier, pipeline_identifier)
     newsip = siplib.Sip(
-        project_code=input_SIPs[0].project.projectCode,
-        project_primaryinvestigator=input_SIPs[0].project.primaryInvestigator,
-        project_contactauthor=input_SIPs[0].project.contactAuthor,
+        project_code=input_SIPs[0].sip.project.projectCode,
+        project_primaryinvestigator=input_SIPs[0].sip.project.primaryInvestigator,
+        project_contactauthor=input_SIPs[0].sip.project.contactAuthor,
         #project_telescope="LOFAR",
-        project_description=input_SIPs[0].project.projectDescription,
-        project_coinvestigators=input_SIPs[0].project.coInvestigator,
+        project_description=input_SIPs[0].sip.project.projectDescription,
+        project_coinvestigators=input_SIPs[0].sip.project.coInvestigator,
         dataproduct = product
     )
     input_DPs = []
