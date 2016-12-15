@@ -26,7 +26,7 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                                   starttime, duration,
                                   description_parset, input_dpids):
     """
-    Create a calibration pipeline object
+    Create a calibration pipeline object for the calibrator pipeline
 
     Parameters:
     -----------
@@ -159,7 +159,6 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
         raise ValueError('make_calibrator_SIP: invalid identifier_source')
     if not os.path.exists(parset_path):
         raise ValueError('make_calibrator_SIP: invalid parset_path')    
-    cal_results_path
     pipeline_parset = parset.Parset(parset_path)
     product_ID = "data"+str(uuid.uuid4())
     pipeline_ID = "pipe"+str(uuid.uuid4())
