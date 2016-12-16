@@ -79,8 +79,8 @@
 ### Stuff that you probably don't need to modify
 # which steps to run 
 pipeline.steps=[mk_inspect_dir, createmap_target, combine_data_target_map, get_ion_files, trans, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results, input_feedback, results_feedback]
-SARA_ingest_target1.pipeline.steps=[mk_inspect_dir, mk_results_dir, createmap_target, download_target_sips, combine_data_target_map, get_ion_files, trans, parmmap, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar,  make_results_mapfile_target1, move_results_target1] 
-SARA_ingest_target2.pipeline.steps=[mk_inspect_dir, createmap_target, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results, createmap_target_sips, combine_target_sips_map, createmap_instrument_sips, results_feedback, make_target_result_sip] 
+SARA_ingest_target1.pipeline.steps=[mk_inspect_dir, mk_results_dir, createmap_target, download_target_sips, combine_data_target_map, get_ion_files, trans, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar,  make_results_target1_mapfile, move_results_target1] 
+SARA_ingest_target2.pipeline.steps=[mk_inspect_dir, createmap_target, combine_data_target_map, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results, createmap_target_sips, combine_target_sips_map, createmap_instrument_sips, results_feedback, make_target_result_sip] 
 
 # which mapfile shall the combine_target_map step read?
 # change this to "createmap_target.output.mapfile" for the second half of the target pipeline
@@ -540,7 +540,7 @@ move_results_target1.control.kind               =  recipe
 move_results_target1.control.type               =  executable_args
 move_results_target1.control.executable         =  /bin/mv
 move_results_target1.control.max_per_node       =  {{ num_proc_per_node_limit }}
-move_results_target1.control.mapfiles_in        =  [ndppp_prep_target.mapfile,make_results_target1_mapfile.output.mapfile]
+move_results_target1.control.mapfiles_in        =  [ndppp_prep_target.output.mapfile,make_results_target1_mapfile.output.mapfile]
 move_results_target1.control.inputkeys          =  [source,destination]
 move_results_target1.control.arguments          =  [source,destination]
 

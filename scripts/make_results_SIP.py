@@ -8,6 +8,24 @@ import numpy as np
 import get_MOM_data as MOM
 import uuid
 
+def input2strlist_nomapfile(invar):
+   """ 
+   from bin/download_IONEX.py
+   give the list of pathes from the list provided as a string
+   """
+   str_list = None
+   if type(invar) is str:
+       if invar.startswith('[') and invar.endswith(']'):
+           str_list = [f.strip(' \'\"') for f in invar.strip('[]').split(',')]
+       else:
+           str_list = [invar.strip(' \'\"')]
+   elif type(invar) is list:
+       str_list = [str(f).strip(' \'\"') for f in invar]
+   else:
+       raise TypeError('input2strlist: Type '+str(type(invar))+' unknown!')
+   return str_list
+
+
 def input2bool(invar):
     if invar == None:
         return None
