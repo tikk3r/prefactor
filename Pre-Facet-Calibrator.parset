@@ -61,9 +61,9 @@ SARA_ingest.pipeline.steps=[createmap_cal, combine_data_cal_map, download_cal_si
 ! identifier_source          = Leiden 
 # path to the file with additional information about prefactor pipelines
 ! pipeline_info_parset_path  = PREFACTOR_SCRATCH_DIR/prefactor/prefactor_pipeline_description.parset
-# path to SIP-creation script
+# path to SIP-download and -creation scripts
+! download_SIPs_script       = PREFACTOR_SCRATCH_DIR/prefactor/scripts/get_MOM_data.py
 ! make_cal_SIP_script        = PREFACTOR_SCRATCH_DIR/prefactor/scripts/make_calibrator_SIP.py
-! download_SIPs_script      = PREFACTOR_SCRATCH_DIR/prefactor/scripts/get_MOM_data.py
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind            =   plugin
