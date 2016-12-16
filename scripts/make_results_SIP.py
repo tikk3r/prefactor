@@ -5,6 +5,7 @@ import siplib
 import feedback
 import time
 import numpy as np
+import lofarpipe.support.parset as parset
 import get_MOM_data as MOM
 import uuid
 
