@@ -38,6 +38,7 @@
 ! plotphases_script         = PREFACTOR_SCRATCH_DIR/prefactor/scripts/plot_solutions_all_stations.py
 ! losoto_executable         = /cvmfs/softdrive.nl/apmechev/lofar_prof/2_18/local/release/bin/losoto
 
+
 # number of processes to use per step per node
 ! num_proc_per_node        = 6
 # number of processes to use per step per node for tasks with high i/o (dppp or cp) or memory (eg calibration)
@@ -62,6 +63,7 @@ SARA_ingest.pipeline.steps=[createmap_cal, combine_data_cal_map, download_cal_si
 ! pipeline_info_parset_path  = PREFACTOR_SCRATCH_DIR/prefactor/prefactor_pipeline_description.parset
 # path to SIP-creation script
 ! make_cal_SIP_script        = PREFACTOR_SCRATCH_DIR/prefactor/scripts/make_calibrator_SIP.py
+! download_SIPs_script      = PREFACTOR_SCRATCH_DIR/prefactor/scripts/get_MOM_data.py
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind            =   plugin
