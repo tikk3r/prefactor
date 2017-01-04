@@ -10,21 +10,21 @@ import get_MOM_data as MOM
 import uuid
 
 def input2strlist_nomapfile(invar):
-   """ 
-   from bin/download_IONEX.py
-   give the list of pathes from the list provided as a string
-   """
-   str_list = None
-   if type(invar) is str:
+    """ 
+    from bin/download_IONEX.py
+    give the list of pathes from the list provided as a string
+    """
+    str_list = None
+    if type(invar) is str:
        if invar.startswith('[') and invar.endswith(']'):
-           str_list = [f.strip(' \'\"') for f in invar.strip('[]').split(',')]
+          str_list = [f.strip(' \'\"') for f in invar.strip('[]').split(',')]
        else:
-           str_list = [invar.strip(' \'\"')]
-   elif type(invar) is list:
+          str_list = [invar.strip(' \'\"')]
+    elif type(invar) is list:
        str_list = [str(f).strip(' \'\"') for f in invar]
-   else:
+    else:
        raise TypeError('input2strlist: Type '+str(type(invar))+' unknown!')
-   return str_list
+    return str_list
 
 
 def input2bool(invar):
@@ -212,11 +212,15 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
 
     created_xml_files = []
     for product in pipeline_products:
-
-        # update the dataproduct
+        
+       
         product_ID = "data"+str(uuid.uuid4())
         product_identifier = siplib.Identifier(id=product_ID, source=identifier_source)
+        pipeline_ID = "pipe"+str(uuid.uuid4())
+        pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
+        # update the dataproduct
         product.set_identifier(product_identifier)
+        product.set_identifier(pipeline_identifier)
         product.set_subarraypointing_identifier( siplib.Identifier(
             id=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.identifier ,
             source=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.source ,
@@ -238,10 +242,8 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
             input_DPs.append( siplib.Identifier(id=inputSIP.sip.dataProduct.dataProductIdentifier.identifier ,
                                                 source=inputSIP.sip.dataProduct.dataProductIdentifier.source ,
                                                 name=inputSIP.sip.dataProduct.dataProductIdentifier.name ))
+            
 
-        # Create the pipeline object for this product
-        pipeline_ID = "pipe"+str(uuid.uuid4())
-        pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
         # Compute values for the pipeline definition
         input_chan = get_LTA_frequency_in_Hz(input_data_SIPs[0].sip.dataProduct.channelWidth)
         output_chan = get_LTA_frequency_in_Hz(product.get_pyxb_dataproduct().channelWidth)
@@ -249,16 +251,19 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         input_int =  get_LTA_Time_in_s(input_data_SIPs[0].sip.dataProduct.integrationInterval)
         output_int = get_LTA_Time_in_s(product.get_pyxb_dataproduct().integrationInterval)
         timestep = int(np.round(output_int/input_int))
+        # update pipeline definition parset
         pipeline_parset.replace('numinstrumentmodels','0')
         pipeline_parset.replace('numcorrelateddataproducts',str(len(pipeline_products)))
         pipeline_parset.replace('frequencyintegrationstep',str(freqstep))
         pipeline_parset.replace('timeintegrationstep',str(timestep))
+        # Create the pipeline object for this product
         starttime = time_in_isoformat()
         duration = 'P0Y0M0DT1H'
         new_pipeline = make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, identifier_source,
                                                     starttime, duration,
                                                     pipeline_parset, input_DPs)
         newsip.add_pipelinerun(new_pipeline)
+        ### save SIP to XML-file
         new_xml_name = product.get_pyxb_dataproduct().fileName.rstrip('/')+".xml"
         newsip.save_to_file(new_xml_name)
         created_xml_files.append(new_xml_name)
