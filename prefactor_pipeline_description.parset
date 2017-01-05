@@ -1,8 +1,8 @@
 prefactor_version="2.0"
 strategyname_cal="prefactor calibrator"
-strategydescription_cal="Pre-Facet-Calibrator version <INSERT_GITHUB_COMMIT_ID_HERE>"
+strategydescription_cal="Pre-Facet-Calibrator version: <INSERT_GITHUB_COMMIT_ID_HERE>"
 strategyname_target="prefactor target"
-strategydescription_target="Pre-Facet-Target version <INSERT_GITHUB_COMMIT_ID_HERE>"
+strategydescription_target="Pre-Facet-Target version: <INSERT_GITHUB_COMMIT_ID_HERE>"
 parset_source=None
 parset_id=None
 skymodeldatabase_calibrator = 'Scaife&Heald (Monthly Notices 423, 2012) via prefactor'

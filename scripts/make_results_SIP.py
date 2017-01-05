@@ -116,8 +116,9 @@ def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                 duration=duration,
                 identifier=pipeline_identifier,
                 observation_identifier=pipeline_identifier,
-                relations=[ siplib.ProcessRelation(
-                    identifier=siplib.Identifier(id="whyisthismandatory?",source=ID_source))]
+                #relations=[ siplib.ProcessRelation(
+                #    identifier=siplib.Identifier(id="whyisthismandatory?",source=ID_source))]
+                relations=[]
                 #parset_source=None,
                 #parset_id=None
             )
@@ -220,7 +221,7 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
         # update the dataproduct
         product.set_identifier(product_identifier)
-        product.set_identifier(pipeline_identifier)
+        product.set_process_identifier(pipeline_identifier)
         product.set_subarraypointing_identifier( siplib.Identifier(
             id=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.identifier ,
             source=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.source ,
