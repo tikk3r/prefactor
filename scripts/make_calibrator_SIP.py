@@ -57,8 +57,7 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                 duration=duration,
                 identifier=pipeline_identifier,
                 observation_identifier=pipeline_identifier,
-                relations=[ siplib.ProcessRelation(
-                    identifier=siplib.Identifier(id="whyisthismandatory?",source=ID_source))]
+                relations=[ ]
                 #parset_source=None,
                 #parset_id=None
             )
@@ -92,7 +91,7 @@ def make_InstrumentModelDP(DP_path, DP_identifier, Pipeline_identifier):
             identifier=DP_identifier,
             size=disk_usage(DP_path),
             filename=DP_path,
-            fileformat="PULP",
+            fileformat="TAR",
             process_identifier=Pipeline_identifier
         )
     )
@@ -124,7 +123,7 @@ def input2strlist_nomapfile(invar):
 
 
 
-def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_source="", parset_path=""):
+def main(cal_results_path="", input_SIP_list=[], pipeline_name="", parset_path=""):
     """
     Create the SIP for the resulting instrument data of a prefactor calibrator pipeline
 
@@ -138,8 +137,6 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
         input to the pipeline run
     pipeline_name : str
         Name that identifies this pipeline run
-    identifier_source : str
-        ASTRON-approoved string for the source of identifiers generated here
     parset_path : str
         path to the parset with additional information about this version of prefactor
     """
@@ -155,11 +152,10 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", identifier_so
         raise ValueError('make_calibrator_SIP: no valid input SIPs given!')
     if len(pipeline_name) <=0:
         raise ValueError('make_calibrator_SIP: invalid pipeline_name')
-    if len(identifier_source) <=0:
-        raise ValueError('make_calibrator_SIP: invalid identifier_source')
     if not os.path.exists(parset_path):
         raise ValueError('make_calibrator_SIP: invalid parset_path')    
     pipeline_parset = parset.Parset(parset_path)
+    identifier_source = pipeline_parset['identifier_source'].getString()
     product_ID = "data"+str(uuid.uuid4())
     pipeline_ID = "pipe"+str(uuid.uuid4())
     product_identifier = siplib.Identifier(id=product_ID, source=identifier_source)

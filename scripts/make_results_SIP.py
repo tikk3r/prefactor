@@ -159,7 +159,7 @@ def time_in_isoformat(timestamp=None):
         return datetime.datetime.utcfromtimestamp(time.time()).isoformat()
 
 def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
-         pipeline_name="", identifier_source="", parset_path="",
+         pipeline_name="", parset_path="",
          verbose = False, fail_on_error = True):
     """
     Generate SIP files for all files mentioned in "results_feedback"
@@ -176,8 +176,6 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         file(s) from the calibrator pipeline
     pipeline_name : str
         Name that identifies this pipeline run
-    identifier_source : str
-        ASTRON-approoved string for the source of identifiers generated here
     parset_path : str
         path to the parset with additional information about this version of prefactor
     verbose : bool, (str with bool value)
@@ -200,8 +198,6 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         f.close()
     if len(pipeline_name) <=0:
         raise ValueError('make_results_SIP: invalid pipeline_name')
-    if len(identifier_source) <=0:
-        raise ValueError('make_results_SIP: invalid identifier_source')
     if not os.path.exists(parset_path):
         raise ValueError('make_results_SIP: invalid parset_path')
     pipeline_products = get_dataproducts_from_feedback(results_feedback)    
@@ -210,6 +206,7 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
     if len(pipeline_products) > 1:
         raise NotImplementedError('make_results_SIP: Can currently only deal with one dataproduct in the feedback file!')
     pipeline_parset = parset.Parset(parset_path)
+    identifier_source = pipeline_parset['identifier_source'].getString()
 
     created_xml_files = []
     for product in pipeline_products:
