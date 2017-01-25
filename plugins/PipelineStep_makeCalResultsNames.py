@@ -13,6 +13,8 @@ def plugin_main(args, **kwargs):
         Filename of datamap with the input files
     extension : str
         extension to add to the output-names
+    ingest_directory : str
+        Directory in which to put the tar-ball
     mapfile_dir : str
         Directory in which to put the created mapfiles
 
@@ -24,6 +26,7 @@ def plugin_main(args, **kwargs):
     """
     mapfile_in = kwargs['mapfile_in']
     extension = kwargs['extension']
+    ingest_directory = kwargs['ingest_directory']
     mapfile_dir = kwargs['mapfile_dir']
 
     map_in = DataMap.load(mapfile_in)
@@ -38,13 +41,22 @@ def plugin_main(args, **kwargs):
     newname = ""
     for obsname in observation_list:
         newname += obsname+"_"
+    newname = newname.strip('_')
     newname += extension
 
+    tar_name = newname += '.tgz'
+    tar_name = os.path.join(ingest_directory,tar_name)
+    
     map_out = DataMap([])
-    map_out.data.append(DataProduct("localhosdt", newname, False))
-
+    map_out.data.append(DataProduct("localhost", newname, False))
     fileid = os.path.join(mapfile_dir, "makeCalResultsDirname.mapfile")
     map_out.save(fileid)
-    result = {'dirname': fileid}
+
+    map_tar_out = DataMap([])
+    map_tar_out.data.append(DataProduct("localhost", tar_name, False))
+    fileid_tar = os.path.join(mapfile_dir, "makeCalResultsDirname.mapfile")
+    map_tar_out.save(fileid_tar)
+
+    result = {'dirname': fileid , 'tarname' : fileid_tar}
 
     return result

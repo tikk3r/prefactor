@@ -79,7 +79,7 @@ def make_InstrumentModelDP(DP_path, DP_identifier, Pipeline_identifier):
     Parameters:
     -----------
     DP_path : str
-        path to the Instrument Model
+        path to the Instrument Model, can be a directory or a file (tar-ball)
     DP_identifier : siplib.Identifier
         new identifier object for the Instrument Model
     Pipeline_identifier : siplib.Identifier

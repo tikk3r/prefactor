@@ -198,7 +198,7 @@ def main(MSfile, dpID_mode="obsID", outdir=".", projectID=None, download_if_need
                                  projectID=projectID, verbose=verbose)
     
     # os.path.basename() also works on SRM-URLs (at least on Linux systems)
-    xmlName = os.path.basename(MSfile).split('.')[0] + ".xml"
+    xmlName = os.path.basename(MSfile) + ".xml"
     xmlPath = os.path.join(outdir,xmlName)
     newsip.save_to_file(xmlPath)
 
