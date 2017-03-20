@@ -32,8 +32,8 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
     -----------
     pipeline_name : str
         Name that identifies this pipeline run.
-    pipeline_ID : str
-        ID for this pipeline run (not yet a siplib.Identifier object!)
+    pipeline_identifier: siplib.Identifier object
+        identifier for this pipeline run 
     ID_source : str
         identifier source for all new identifiers in this pipeline
     starttime : str
@@ -156,10 +156,8 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", parset_path="
         raise ValueError('make_calibrator_SIP: invalid parset_path')    
     pipeline_parset = parset.Parset(parset_path)
     identifier_source = pipeline_parset['identifier_source'].getString()
-    product_ID = "data"+str(uuid.uuid4())
-    pipeline_ID = "pipe"+str(uuid.uuid4())
-    product_identifier = siplib.Identifier(id=product_ID, source=identifier_source)
-    pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
+    product_identifier = siplib.Identifier(source=identifier_source)
+    pipeline_identifier = siplib.Identifier(source=identifier_source)
     new_product = make_InstrumentModelDP(cal_results_path, product_identifier, pipeline_identifier)
     newsip = siplib.Sip(
         project_code=input_SIPs[0].sip.project.projectCode,

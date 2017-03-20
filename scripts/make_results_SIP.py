@@ -91,8 +91,8 @@ def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
     -----------
     pipeline_name : str
         Name that identifies this pipeline run.
-    pipeline_ID : str
-        ID for this pipeline run (not yet a siplib.Identifier object!)
+    pipeline_identifier: siplib.Identifier object
+        identifier for this pipeline run 
     ID_source : str
         identifier source for all new identifiers in this pipeline
     starttime : str
@@ -116,8 +116,6 @@ def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                 duration=duration,
                 identifier=pipeline_identifier,
                 observation_identifier=pipeline_identifier,
-                #relations=[ siplib.ProcessRelation(
-                #    identifier=siplib.Identifier(id="whyisthismandatory?",source=ID_source))]
                 relations=[]
                 #parset_source=None,
                 #parset_id=None
@@ -212,17 +210,12 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
     for product in pipeline_products:
         
        
-        product_ID = "data"+str(uuid.uuid4())
-        product_identifier = siplib.Identifier(id=product_ID, source=identifier_source)
-        pipeline_ID = "pipe"+str(uuid.uuid4())
-        pipeline_identifier = siplib.Identifier(id=pipeline_ID, source=identifier_source)
+        product_identifier = siplib.Identifier(source=identifier_source)
+        pipeline_identifier = siplib.Identifier(source=identifier_source)
         # update the dataproduct
         product.set_identifier(product_identifier)
         product.set_process_identifier(pipeline_identifier)
-        product.set_subarraypointing_identifier( siplib.Identifier(
-            id=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.identifier ,
-            source=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.source ,
-            name=input_data_SIPs[0].sip.dataProduct.subArrayPointingIdentifier.name ))
+        product.set_subarraypointing_identifier( input_data_SIPs[0].get_dataproduct_subarraypointing_identifier() )
         newsip = siplib.Sip(
             project_code=input_data_SIPs[0].sip.project.projectCode,
             project_primaryinvestigator=input_data_SIPs[0].sip.project.primaryInvestigator,
@@ -232,15 +225,10 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
             dataproduct = product
         )
         newsip.add_related_dataproduct_with_history(instrument_SIP)
-        input_DPs = [ siplib.Identifier(id=instrument_SIP.sip.dataProduct.dataProductIdentifier.identifier ,
-                                        source=instrument_SIP.sip.dataProduct.dataProductIdentifier.source ,
-                                        name=instrument_SIP.sip.dataProduct.dataProductIdentifier.name ) ]
+        input_DPs = [ instrument_SIP.get_dataproduct_identifier() ]
         for inputSIP in input_data_SIPs:
             newsip.add_related_dataproduct_with_history(inputSIP)
-            input_DPs.append( siplib.Identifier(id=inputSIP.sip.dataProduct.dataProductIdentifier.identifier ,
-                                                source=inputSIP.sip.dataProduct.dataProductIdentifier.source ,
-                                                name=inputSIP.sip.dataProduct.dataProductIdentifier.name ))
-            
+            input_DPs.append( inputSIP.get_dataproduct_identifier() )
 
         # Compute values for the pipeline definition
         input_chan = get_LTA_frequency_in_Hz(input_data_SIPs[0].sip.dataProduct.channelWidth)
