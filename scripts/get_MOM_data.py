@@ -112,6 +112,8 @@ def get_SIP_from_MSfile(path, dpID_mode="obsID", download_if_needed=True, projec
         raise ValueError("Cannot find SIP in cache and download is forbidden")
     if not projectID:
         projectID = get_projectID_from_MSfile(path)
+        if verbose:
+            print "Got projectID: \"%s\" for file: %s"%(projectID,fileID)
     if dpID_mode.upper() == "OBSID":
         obsID = get_obsID_from_filename(filename)
         get_SIPs_from_obsID(obsID, projectID, verbose)
