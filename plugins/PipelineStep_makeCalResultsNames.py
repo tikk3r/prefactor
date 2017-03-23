@@ -54,7 +54,7 @@ def plugin_main(args, **kwargs):
 
     map_tar_out = DataMap([])
     map_tar_out.data.append(DataProduct("localhost", tar_name, False))
-    fileid_tar = os.path.join(mapfile_dir, "makeCalResultsDirname.mapfile")
+    fileid_tar = os.path.join(mapfile_dir, "makeCalResultsTarname.mapfile")
     map_tar_out.save(fileid_tar)
 
     result = {'dirname': fileid , 'tarname' : fileid_tar}
