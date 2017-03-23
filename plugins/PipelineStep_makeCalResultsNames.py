@@ -44,7 +44,7 @@ def plugin_main(args, **kwargs):
     newname = newname.strip('_')
     newname += extension
 
-    tar_name = newname += '.tgz'
+    tar_name = newname + '.tgz'
     tar_name = os.path.join(ingest_directory,tar_name)
     
     map_out = DataMap([])
