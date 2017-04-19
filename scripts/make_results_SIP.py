@@ -56,16 +56,23 @@ def read_matching_file(matchfile):
     return file_matching
 
 
-def get_dataproducts_from_feedback(infile):
+def get_dataproducts_from_feedback(infile, ID_source):
     """
     Reads in the pseudo feedback file given as input and returns a list of dataproducts.
+
+    Parameters:
+    -----------
+    infile : str
+        path to the feedback file to read in
+    ID_source : str
+        identifier source for all new identifiers in this pipeline
     """
     dataproducts = []
     with open(infile) as f:
         text = f.readlines()
         FBdata = feedback.Feedback(text)
         prefix = text[0].split('.')[0]
-        dataproducts = FBdata.get_dataproducts(prefix=prefix)
+        dataproducts = FBdata.get_dataproducts(prefix=prefix, identifier_source=ID_source)
     return dataproducts
 
 def parset_to_int(parset,key):
@@ -81,7 +88,7 @@ def parset_to_bool(parset,key):
         return parset[key].getBool()
 
 
-def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
+def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, observation_identifier, ID_source,
                                   starttime, duration,
                                   description_parset, input_dpids):
     """
@@ -93,6 +100,8 @@ def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
         Name that identifies this pipeline run.
     pipeline_identifier: siplib.Identifier object
         identifier for this pipeline run 
+   observation_identifier: siplib.Identifier object
+        identifier for the observation asscociated with this pipeline run 
     ID_source : str
         identifier source for all new identifiers in this pipeline
     starttime : str
@@ -115,7 +124,7 @@ def make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                 starttime=starttime,
                 duration=duration,
                 identifier=pipeline_identifier,
-                observation_identifier=pipeline_identifier,
+                observation_identifier=observation_identifier,
                 relations=[]
                 #parset_source=None,
                 #parset_id=None
@@ -198,18 +207,17 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         raise ValueError('make_results_SIP: invalid pipeline_name')
     if not os.path.exists(parset_path):
         raise ValueError('make_results_SIP: invalid parset_path')
-    pipeline_products = get_dataproducts_from_feedback(results_feedback)    
     verbose = input2bool(verbose)
     fail_on_error = input2bool(fail_on_error)
-    if len(pipeline_products) > 1:
-        raise NotImplementedError('make_results_SIP: Can currently only deal with one dataproduct in the feedback file!')
     pipeline_parset = parset.Parset(parset_path)
     identifier_source = pipeline_parset['identifier_source'].getString()
 
+    pipeline_products = get_dataproducts_from_feedback(results_feedback, identifier_source)    
+    if len(pipeline_products) > 1:
+        raise NotImplementedError('make_results_SIP: Can currently only deal with one dataproduct in the feedback file!')
+
     created_xml_files = []
     for product in pipeline_products:
-        
-       
         product_identifier = siplib.Identifier(source=identifier_source)
         pipeline_identifier = siplib.Identifier(source=identifier_source)
         # update the dataproduct
@@ -244,8 +252,10 @@ def main(results_feedback='', input_data_SIP_list=[], instrument_SIP='',
         pipeline_parset.replace('timeintegrationstep',str(timestep))
         # Create the pipeline object for this product
         starttime = time_in_isoformat()
-        duration = 'P0Y0M0DT1H'
-        new_pipeline = make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, identifier_source,
+        duration = 'PT1H'
+        # for now give the same identifier for the pipeline and the observation
+        new_pipeline = make_TarPipeline_from_parset(pipeline_name, pipeline_identifier, pipeline_identifier, 
+                                                    identifier_source,
                                                     starttime, duration,
                                                     pipeline_parset, input_DPs)
         newsip.add_pipelinerun(new_pipeline)

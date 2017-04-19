@@ -22,7 +22,7 @@ def parset_to_bool(parset,key):
     else:
         return parset[key].getBool()
 
-def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
+def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, observation_identifier, ID_source,
                                   starttime, duration,
                                   description_parset, input_dpids):
     """
@@ -34,6 +34,8 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
         Name that identifies this pipeline run.
     pipeline_identifier: siplib.Identifier object
         identifier for this pipeline run 
+    observation_identifier: siplib.Identifier object
+        identifier for the observation asscociated with this pipeline run 
     ID_source : str
         identifier source for all new identifiers in this pipeline
     starttime : str
@@ -56,7 +58,7 @@ def make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, ID_source,
                 starttime=starttime,
                 duration=duration,
                 identifier=pipeline_identifier,
-                observation_identifier=pipeline_identifier,
+                observation_identifier=observation_identifier,
                 relations=[ ]
                 #parset_source=None,
                 #parset_id=None
@@ -171,14 +173,15 @@ def main(cal_results_path="", input_SIP_list=[], pipeline_name="", parset_path="
     input_DPs = []
     for inputSIP in input_SIPs:
         newsip.add_related_dataproduct_with_history(inputSIP)
-        input_DPs.append( siplib.Identifier(id=inputSIP.sip.dataProduct.dataProductIdentifier.identifier ,
-                                            source=inputSIP.sip.dataProduct.dataProductIdentifier.source ,
-                                            name=inputSIP.sip.dataProduct.dataProductIdentifier.name ))
+        input_DPs.append( inputSIP.get_dataproduct_identifier() )
+
     starttime = time_in_isoformat()
-    duration = 'P0Y0M0DT1H'
+    duration = 'PT1H'
     pipeline_parset.replace('numinstrumentmodels','1')
     pipeline_parset.replace('numcorrelateddataproducts','0')
-    new_pipeline = make_CalPipeline_from_parset(pipeline_name, pipeline_identifier, identifier_source,
+    # for now give the same identifier for the pipeline and the observation
+    new_pipeline = make_CalPipeline_from_parset(pipeline_name, pipeline_identifier,  pipeline_identifier, 
+                                                identifier_source,
                                                 starttime, duration,
                                                 pipeline_parset, input_DPs)
     newsip.add_pipelinerun(new_pipeline)
