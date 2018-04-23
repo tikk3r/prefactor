@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Script to correct the frequencies of MS 
+Script to correct the frequencies of MS
 observed during LOFAR cycle 0.
 """
 from __future__ import print_function
@@ -26,7 +26,7 @@ def read_ms(ms):
     Read the frequency center for each channel and the widths.
     Return also the frequency spacing
     """
-    msfr = tables.table(os.path.join(ms, "SPECTRAL_WINDOW"), 
+    msfr = tables.table(os.path.join(ms, "SPECTRAL_WINDOW"),
                         readonly=True)
     frequencies = msfr.getcol('CHAN_FREQ')[0]
     spacing = frequencies[1:]-frequencies[:-1]
@@ -40,7 +40,7 @@ def write_ms(ms, freqs, widths=None, ref_frequency=None, total_bandwidth=None):
     """
     Write the frequency center for each channel and the widths.
     """
-    msfr = tables.table(os.path.join(ms, "SPECTRAL_WINDOW"), 
+    msfr = tables.table(os.path.join(ms, "SPECTRAL_WINDOW"),
                         readonly=False)
     # Check size of the freqs
     aux_freqs = np.expand_dims(freqs, axis=0)
@@ -74,8 +74,8 @@ def compute_freqs(group, sb_per_group=10, channels_per_group=50):
         central_freq = get_central_freq(group, sb_per_group=sb_per_group, corr_factor=1)
     else:
         central_freq = get_central_freq(group, sb_per_group=sb_per_group)
-        
-    
+
+
     # Heuristics for the channel positions
     # TODO: Correct for sb_per_group different than 10 or 1
     if sb_per_group == 10:
@@ -104,8 +104,8 @@ def compute_freqs(group, sb_per_group=10, channels_per_group=50):
     # Compute the channel step
     cstep = np.absolute(central_freq - central_freq_aux)/channels_per_group
     channel_shift = channels_per_group/2-0.5
-    freq_comp = np.linspace(central_freq-channel_shift*cstep, 
-                           central_freq+channel_shift*cstep, 
+    freq_comp = np.linspace(central_freq-channel_shift*cstep,
+                           central_freq+channel_shift*cstep,
                            channels_per_group,
                            dtype="Float64")
     return freq_comp
@@ -136,13 +136,13 @@ def get_group_sb(ms):
 
 def get_info(ms, read_cpg=True):
     """
-    Get the group, number of sub-bands per group and number of channels 
+    Get the group, number of sub-bands per group and number of channels
     per groups for a given ms
     """
     group, sb_per_group = get_group_sb(ms)
     if group is None:
         raise ValueError("Imposible to determine group from ms name")
-        
+
     if read_cpg:
         channels_per_group = get_channels_per_group(ms)
     else:
@@ -160,8 +160,8 @@ def prepare_freqs(ms, group=None, sb_per_group=None):
             sb_per_group = sb_per_group_extracted
     else:
         channels_per_group = get_channels_per_group(ms)
-    return compute_freqs(group, 
-                         sb_per_group=sb_per_group, 
+    return compute_freqs(group,
+                         sb_per_group=sb_per_group,
                          channels_per_group=channels_per_group)
 
 def show_ms(ms, machine_readable=False, group=None, sb_per_group=None):
@@ -173,10 +173,10 @@ def show_ms(ms, machine_readable=False, group=None, sb_per_group=None):
     print(spacing)
     print("Widths")
     print(widths)
-    print("Total widths: {}; Total_bandwidth: {}; difference: {}".format(np.sum(widths), 
-                                                                         total_bandwidth, 
+    print("Total widths: {}; Total_bandwidth: {}; difference: {}".format(np.sum(widths),
+                                                                         total_bandwidth,
                                                                          np.sum(widths)-total_bandwidth))
-           
+
     freq_comp = prepare_freqs(ms, group=group, sb_per_group=sb_per_group)
 
     print("Computed frequencies")
@@ -210,8 +210,8 @@ def correct_ms(ms, w=False, rf=False, tb=False, group=None, sb_per_group=None):
     if tb:
         total_bandwidth_new = np.sum(widths)
     if w or rf or tb:
-        write_ms(ms, freq_comp, 
-                 widths=widths_new, 
+        write_ms(ms, freq_comp,
+                 widths=widths_new,
                  ref_frequency=ref_frequency_new,
                  total_bandwidth=total_bandwidth_new)
 
@@ -234,21 +234,21 @@ if __name__ == "__main__":
         list_ms.extend(list_ms2)
         for ms in list_ms:
             if args.correct:
-                correct_ms(ms, 
-                           w=args.widths, 
-                           rf=args.ref_frequency, 
+                correct_ms(ms,
+                           w=args.widths,
+                           rf=args.ref_frequency,
                            tb=args.total_bandwidth)
             else:
                 show_ms(ms)
     else:
         if args.correct:
-            correct_ms(args.ms, 
-                       w=args.widths, 
-                       rf=args.ref_frequency, 
+            correct_ms(args.ms,
+                       w=args.widths,
+                       rf=args.ref_frequency,
                        tb=args.total_bandwidth,
                        group=args.group,
                        sb_per_group=args.sb_per_group)
         else:
-            show_ms(args.ms, 
+            show_ms(args.ms,
                     group=args.group,
                     sb_per_group=args.sb_per_group)
