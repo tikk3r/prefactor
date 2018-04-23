@@ -28,6 +28,8 @@ def main(ms, correct, **kwargs):
         rf = eval(kwargs['ref-frequency'])
         tb = eval(kwargs['widths'])
         correct_ms(ms, w=w, rf=rf, tb=tb, group=None, sb_per_group=None)
+    else:
+        show_ms(ms)
 
 def read_ms(ms):
     """
