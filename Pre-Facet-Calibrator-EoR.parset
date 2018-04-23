@@ -81,15 +81,12 @@ ndppp_prep_cal.argument.msin.baseline          = *&
 ndppp_prep_cal.argument.msout.datacolumn       = DATA
 ndppp_prep_cal.argument.msout.writefullresflag = False
 ndppp_prep_cal.argument.msout.overwrite        = True ############
-ndppp_prep_cal.argument.steps                  = [flag,filter,avg,flagamp]
+ndppp_prep_cal.argument.steps                  = [flag,filter,flagamp]
 ndppp_prep_cal.argument.flag.type              = preflagger
 ndppp_prep_cal.argument.flag.baseline          = {{ flag_baselines }}
 ndppp_prep_cal.argument.filter.type            = filter
 ndppp_prep_cal.argument.filter.baseline        = CS*, RS*&&
 ndppp_prep_cal.argument.filter.remove          = true                     # fully kick out the international stations.
-ndppp_prep_cal.argument.avg.type               = average
-ndppp_prep_cal.argument.avg.timeresolution     = 4.        # average to ca. 4 seconds integration time.
-ndppp_prep_cal.argument.avg.freqresolution     = 48.82kHz  # average to 4 ch/SB frequency resolution
 ndppp_prep_cal.argument.flagamp.type           = preflagger
 ndppp_prep_cal.argument.flagamp.amplmin        = 1e-30
 

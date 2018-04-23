@@ -11,9 +11,9 @@
 
 ### parameters you will need to adjust.
 # parameters you will need to adjust.
-# averaging for the target data
-! avg_timeresolution     = 4.        # average to 4 sec/timeslot
-! avg_freqresolution     = 48.82kHz  # average to 48.82 kHz/ch (= 4 ch/SB)
+# averaging for the target data -- NOT NEEDED
+#! avg_timeresolution     = 4.        # average to 4 sec/timeslot
+#! avg_freqresolution     = 48.82kHz  # average to 48.82 kHz/ch (= 4 ch/SB)
 # where to find the target data
 ! target_input_path      = /data/scratch/drabent/
 ! target_input_pattern   = L217457*SB00*.MS
@@ -140,7 +140,7 @@ trans.argument.ionex_server     =  {{ ionex_server }}
 trans.argument.ionex_prefix     =  {{ ionex_prefix }}
 trans.argument.ionexPath        =  {{ ionex_path }}
 
-#run NDPPP on the target data to flag, transfer calibrator values, and average
+#run NDPPP on the target data to flag, transfer calibrator values
 ndppp_prep_target.control.type                         = dppp
 ndppp_prep_target.control.max_per_node                 = {{ num_proc_per_node_limit }}
 ndppp_prep_target.control.error_tolerance              = {{ error_tolerance }}
@@ -153,7 +153,7 @@ ndppp_prep_target.argument.msin.baseline               = CS*&; RS*&; CS*&RS*
 ndppp_prep_target.argument.msout.datacolumn            = DATA
 ndppp_prep_target.argument.msout.writefullresflag      = False
 ndppp_prep_target.argument.msout.overwrite             = True
-ndppp_prep_target.argument.steps                       = [flag1,filter,flagamp,applyclock,applybandpass,applyoffset,applybeam,applyrm,count,flag2,count,avg]
+ndppp_prep_target.argument.steps                       = [flag1,filter,flagamp,applyclock,applybandpass,applyoffset,applybeam,applyrm,count,flag2,count]
 ndppp_prep_target.argument.flag1.type                  = preflagger
 ndppp_prep_target.argument.flag1.baseline              = {{ flag_baselines }}
 ndppp_prep_target.argument.filter.type                 = filter
@@ -182,9 +182,6 @@ ndppp_prep_target.argument.flag2.type                  = aoflagger
 ndppp_prep_target.argument.flag2.keepstatistics        = false
 ndppp_prep_target.argument.flag2.memoryperc            = 10
 ndppp_prep_target.argument.flag2.strategy              = {{ flagging_strategy }}
-ndppp_prep_target.argument.avg.type                    = average
-ndppp_prep_target.argument.avg.timeresolution          = {{ avg_timeresolution }}
-ndppp_prep_target.argument.avg.freqresolution          = {{ avg_freqresolution }}
 
 # create a mapfile with the A-Team skymodel, length = 1
 create_ateam_model_map.control.kind              =  plugin
