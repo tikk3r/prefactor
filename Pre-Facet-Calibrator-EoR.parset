@@ -49,7 +49,7 @@
 
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[createmap_cal, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal, h5_imp_cal_map, h5imp_cal, process_losoto, mk_inspect_dir, copy_h5imp_cal, fitclock, ampl, plots, phase, plot_cal_phases, createmap_cal_pngs, copy_cal_pngs, createmap_cal_txts, copy_cal_txts, mk_cal_values_dir, createmap_cal_npys, copy_cal_npys]
+pipeline.steps=[createmap_cal, eor_frequency_fix, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal, h5_imp_cal_map, h5imp_cal, process_losoto, mk_inspect_dir, copy_h5imp_cal, fitclock, ampl, plots, phase, plot_cal_phases, createmap_cal_pngs, copy_cal_pngs, createmap_cal_txts, copy_cal_txts, mk_cal_values_dir, createmap_cal_npys, copy_cal_npys]
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind            =   plugin
@@ -59,6 +59,15 @@ createmap_cal.control.mapfile_dir     =   input.output.mapfile_dir
 createmap_cal.control.filename        =   createmap_cal.mapfile
 createmap_cal.control.folder          =   {{ cal_input_path }}
 createmap_cal.control.pattern         =   {{ cal_input_pattern }}
+
+# Adjust the frequency channels to avoid problems later on.
+eor_frequency_fix.control.type             = pythonplugin
+eor_frequency_fix.control.executable       = {{ eor_fix_script }}
+eor_frequency_fix.argument.flags           = createmap_cal.output.mapfile
+eor_frequency_fix.argument.correct         = True
+eor_frequency_fix.argument.widths          = True
+eor_frequency_fix.argument.ref-frequency   = True
+eor_frequency_fix.argument.total-bandwidth = True
 
 # run NDPPP on the calibrator data
 ndppp_prep_cal.control.type                    = dppp
@@ -91,15 +100,6 @@ combine_data_cal_map.control.method          =   mapfile_all_to_one
 combine_data_cal_map.control.mapfile_dir     =   input.output.mapfile_dir
 combine_data_cal_map.control.filename        =   combine_data_cal_map.mapfile
 combine_data_cal_map.control.mapfile_in      =   createmap_cal.output.mapfile
-
-# Adjust the frequency channels to avoid problems later on.
-eor_frequency_fix.control.type             = pythonplugin
-eor_frequency_fix.control.executable       = {{ eor_fix_script }}
-eor_frequency_fix.argument.flags           = combine_data_cal_map.output.mapfile
-eor_frequency_fix.argument.correct         = True
-eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref-frequency   = True
-eor_frequency_fix.argument.total-bandwidth = True
 
 # find automatically the calibrator used and update the BBS calibration parset
 sky_cal.control.type               = pythonplugin
