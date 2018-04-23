@@ -93,10 +93,13 @@ combine_data_cal_map.control.filename        =   combine_data_cal_map.mapfile
 combine_data_cal_map.control.mapfile_in      =   createmap_cal.output.mapfile
 
 # Adjust the frequency channels to avoid problems later on.
-eor_frequency_fix.type             = pythonplugin
-eor_frequency_fix.executable       = {{ eor_fix_script }}
-eor_frequency_fix.flags            = [combine_data_cal_map.output.mapfile]
-eor_frequency_fix.correct = True
+eor_frequency_fix.control.type             = pythonplugin
+eor_frequency_fix.control.executable       = {{ eor_fix_script }}
+eor_frequency_fix.argument.flags           = combine_data_cal_map.output.mapfile
+eor_frequency_fix.argument.correct         = True
+eor_frequency_fix.argument.widths          = True
+eor_frequency_fix.argument.ref-frequency   = True
+eor_frequency_fix.argument.total-bandwidth = True
 
 # find automatically the calibrator used and update the BBS calibration parset
 sky_cal.control.type               = pythonplugin

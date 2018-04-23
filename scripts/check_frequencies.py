@@ -2,6 +2,10 @@
 """
 Script to correct the frequencies of MS
 observed during LOFAR cycle 0.
+
+Originally by the EoR group.
+
+Modified by: Frits Sweijen (sweijen <at> strw.leidenuniv.nl)
 """
 from __future__ import print_function
 import os
@@ -15,11 +19,15 @@ import re
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def main(ms):
+def main(ms, correct, **kwargs):
     """
     Function to be called from the pipeline
     """
-    correct_ms(ms)
+    if eval(correct):
+        w = eval(kwargs['widths'])
+        rf = eval(kwargs['ref-frequency'])
+        tb = eval(kwargs['widths'])
+        correct_ms(ms, w=w, rf=rf, tb=tb, group=None, sb_per_group=None)
 
 def read_ms(ms):
     """
