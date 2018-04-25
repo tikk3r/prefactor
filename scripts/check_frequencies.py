@@ -6,7 +6,7 @@ observed during LOFAR cycle 0.
 Originally by the EoR group.
 
 Modified by: Frits Sweijen (sweijen <at> strw.leidenuniv.nl)
-"""
+"""os
 from __future__ import print_function
 import os
 import numpy as np
