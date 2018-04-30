@@ -1,4 +1,7 @@
-# prefactor
+# prefactor-eor
+
+The prefactor pipeline adapted for the reduction of EoR data on the grid. An additional step is implemented with [a script from the EoR group](https://github.com/nudomarinero/Astrocompute-ELAIS-N1/blob/master/pipeline/scripts/check_frequencies.py) to fix the frequency spacing.
+
 ## The LOFAR pre-facet calibration pipeline.
 
 Parsets for the genericpipeline that do the first calibration of LOFAR data. Originally in order
@@ -55,5 +58,3 @@ The procedure is also mostly described in these papers:
 * van Weeren, R. J., Williams, W. L., Hardcastle, M. J., et al. 2016, ApJS, 223, 2
 * Williams, W. L., van Weeren, R. J., Röttgering, H. J. A., et al. 2016, MNRAS,
 460, 2385
-
-

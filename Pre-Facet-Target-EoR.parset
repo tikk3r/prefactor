@@ -11,9 +11,6 @@
 
 ### parameters you will need to adjust.
 # parameters you will need to adjust.
-# averaging for the target data -- NOT NEEDED
-#! avg_timeresolution     = 4.        # average to 4 sec/timeslot
-#! avg_freqresolution     = 48.82kHz  # average to 48.82 kHz/ch (= 4 ch/SB)
 # where to find the target data
 ! target_input_path      = /data/scratch/drabent/
 ! target_input_pattern   = L217457*SB00*.MS
