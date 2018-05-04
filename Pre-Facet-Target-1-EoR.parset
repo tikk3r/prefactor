@@ -107,8 +107,8 @@ eor_frequency_fix.control.executable       = {{ eor_fix_script }}
 eor_frequency_fix.argument.flags           = createmap_target.output.mapfile
 eor_frequency_fix.argument.correct         = True
 eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref-frequency   = True
-eor_frequency_fix.argument.total-bandwidth = True
+eor_frequency_fix.argument.ref_frequency   = True
+eor_frequency_fix.argument.total_bandwidth = True
 
 # combine all entries into one mapfile, for the sortmap script
 combine_data_target_map.control.kind            =   plugin
