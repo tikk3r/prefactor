@@ -85,7 +85,7 @@
 
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[mk_inspect_dir, createmap_target, eor_frequency_fix, combine_data_target_map, get_ion_files, trans, parmmap, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar, mk_results_dir, make_results_mapfile, move_results] #h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results]
+pipeline.steps=[mk_inspect_dir, createmap_target, combine_data_target_map, get_ion_files, trans, parmmap, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar, mk_results_dir, make_results_mapfile, move_results] #h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results]
 
 # create the inspection_directory if needed
 mk_inspect_dir.control.kind               =  plugin

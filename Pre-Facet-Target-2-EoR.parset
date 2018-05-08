@@ -80,7 +80,7 @@
 ! error_tolerance           =  False
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[mk_inspect_dir, createmap_target, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results] #h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results]
+pipeline.steps=[mk_inspect_dir, createmap_target, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, eor_frequency_fix, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results]
 
 # create the inspection_directory if needed
 mk_inspect_dir.control.kind               =  plugin

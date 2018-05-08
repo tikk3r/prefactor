@@ -49,7 +49,7 @@
 
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[createmap_cal, eor_frequency_fix, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal]
+pipeline.steps=[createmap_cal, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal]
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind            =   plugin
