@@ -87,7 +87,6 @@ mk_inspect_dir.control.kind               =  plugin
 mk_inspect_dir.control.type               =  makeDirectory
 mk_inspect_dir.control.directory          =  {{ inspection_directory }}
 
-
 #
 createmap_target.control.kind            =   plugin
 createmap_target.control.type            =   createMapfile
