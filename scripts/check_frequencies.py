@@ -27,7 +27,8 @@ def main(ms, correct, **kwargs):
         w = eval(kwargs['widths'])
         rf = eval(kwargs['ref_frequency'])
         tb = eval(kwargs['total_bandwidth'])
-        correct_ms(ms, w=w, rf=rf, tb=tb, group=None, sb_per_group=None)
+        sb_per_group = eval(kwargs['sb_per_group'])
+        correct_ms(ms, w=w, rf=rf, tb=tb, group=None, sb_per_group=sb_per_group)
     else:
         show_ms(ms)
 

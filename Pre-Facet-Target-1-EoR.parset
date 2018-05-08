@@ -101,15 +101,6 @@ createmap_target.control.filename        =   createmap_target.mapfile
 createmap_target.control.folder          =   {{ target_input_path }}
 createmap_target.control.pattern         =   {{ target_input_pattern }}
 
-# Adjust the frequency channels to avoid problems later on.
-eor_frequency_fix.control.type             = pythonplugin
-eor_frequency_fix.control.executable       = {{ eor_fix_script }}
-eor_frequency_fix.argument.flags           = createmap_target.output.mapfile
-eor_frequency_fix.argument.correct         = True
-eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref_frequency   = True
-eor_frequency_fix.argument.total_bandwidth = True
-
 # combine all entries into one mapfile, for the sortmap script
 combine_data_target_map.control.kind            =   plugin
 combine_data_target_map.control.type            =   createMapfile

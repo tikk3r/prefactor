@@ -60,15 +60,6 @@ createmap_cal.control.filename        =   createmap_cal.mapfile
 createmap_cal.control.folder          =   {{ cal_input_path }}
 createmap_cal.control.pattern         =   {{ cal_input_pattern }}
 
-# Adjust the frequency channels to avoid problems later on.
-eor_frequency_fix.control.type             = pythonplugin
-eor_frequency_fix.control.executable       = {{ eor_fix_script }}
-eor_frequency_fix.argument.flags           = createmap_cal.output.mapfile
-eor_frequency_fix.argument.correct         = True
-eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref_frequency   = True
-eor_frequency_fix.argument.total_bandwidth = True
-
 # run NDPPP on the calibrator data
 ndppp_prep_cal.control.type                    = dppp
 ndppp_prep_cal.control.max_per_node            = {{ num_proc_per_node_limit }}
