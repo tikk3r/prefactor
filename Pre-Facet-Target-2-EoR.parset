@@ -149,16 +149,6 @@ dpppconcat.argument.flag.keepstatistics   =  false
 dpppconcat.argument.flag.memoryperc       =  10
 dpppconcat.argument.flag.strategy         =  {{ flagging_strategy }}
 
-# Adjust the frequency channels to make the concatenated dataset evenly spaced.
-eor_frequency_fix.control.type             = pythonplugin
-eor_frequency_fix.control.executable       = {{ eor_fix_script }}
-eor_frequency_fix.argument.flags           = dpppconcat.output.mapfile
-eor_frequency_fix.argument.correct         = True
-eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref_frequency   = True
-eor_frequency_fix.argument.total_bandwidth = True
-eor_frequency_fix.argument.sb_per_group    = {{ num_SBs_per_group }}
-
 # check all files for minimum unflagged fraction
 check_unflagged.control.type            =  pythonplugin
 check_unflagged.control.executable      =  {{ check_flagged_script }}
