@@ -98,6 +98,8 @@ def find_nearest(value, arr):
     return array[index]
 
 def main(msname, correct, total_bandwidth):
+    correct = ast.literal_eval(correct)
+    total_bandwidth = ast.literal_eval(total_bandwidth)
     print('=')
     print('= Opening {0:s} for correction.'.format(msname))
     print('=')

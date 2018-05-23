@@ -67,7 +67,6 @@
 ! check_flagged_script     = PREFACTOR_SCRATCH_DIR/prefactor/scripts/check_unflagged_fraction.py
 ! structurefunction_script = PREFACTOR_SCRATCH_DIR/prefactor/scripts/getStructure_from_phases.py
 ! plotphases_script        = PREFACTOR_SCRATCH_DIR/prefactor/scripts/plot_solutions_all_stations.py
-! eor_fix_script           = PREFACTOR_SCRATCH_DIR/prefactor/scripts/check_frequencies.py
 ! losoto_executable        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/local/release/bin/losoto
 ! makesourcedb             = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/bin/makesourcedb
 ! flagging_strategy        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/share/rfistrategies/HBAdefault
@@ -85,7 +84,7 @@
 
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[mk_inspect_dir, createmap_target, eor_frequency_fix, combine_data_target_map, get_ion_files, trans, parmmap, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar, mk_results_dir, make_results_mapfile, move_results] #h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results]
+pipeline.steps=[mk_inspect_dir, createmap_target, combine_data_target_map, get_ion_files, trans, parmmap, ndppp_prep_target, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, predict_ateam, ateamcliptar, mk_results_dir, make_results_mapfile, move_results] #h5imp_gsmsol, plot_gsm_phases, gsmcal_antmap, make_structurefunction, old_plot_gsmphases, createmap_plots, copy_plots, mk_results_dir, make_results_mapfile, move_results]
 
 # create the inspection_directory if needed
 mk_inspect_dir.control.kind               =  plugin
@@ -100,15 +99,6 @@ createmap_target.control.mapfile_dir     =   input.output.mapfile_dir
 createmap_target.control.filename        =   createmap_target.mapfile
 createmap_target.control.folder          =   {{ target_input_path }}
 createmap_target.control.pattern         =   {{ target_input_pattern }}
-
-# Adjust the frequency channels to avoid problems later on.
-eor_frequency_fix.control.type             = pythonplugin
-eor_frequency_fix.control.executable       = {{ eor_fix_script }}
-eor_frequency_fix.argument.flags           = createmap_target.output.mapfile
-eor_frequency_fix.argument.correct         = True
-eor_frequency_fix.argument.widths          = True
-eor_frequency_fix.argument.ref-frequency   = True
-eor_frequency_fix.argument.total-bandwidth = True
 
 # combine all entries into one mapfile, for the sortmap script
 combine_data_target_map.control.kind            =   plugin
