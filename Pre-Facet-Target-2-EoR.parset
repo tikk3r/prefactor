@@ -64,7 +64,7 @@
 ! check_flagged_script     = PREFACTOR_SCRATCH_DIR/prefactor/scripts/check_unflagged_fraction.py
 ! structurefunction_script = PREFACTOR_SCRATCH_DIR/prefactor/scripts/getStructure_from_phases.py
 ! plotphases_script        = PREFACTOR_SCRATCH_DIR/prefactor/scripts/plot_solutions_all_stations.py
-! eor_fix_script           = PREFACTOR_SCRATCH_DIR/prefactor/scripts/check_frequencies.py
+! eor_fix_script           = PREFACTOR_SCRATCH_DIR/prefactor/scripts/fix_frequencies.py
 ! losoto_executable        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/local/release/bin/losoto
 ! makesourcedb             = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/bin/makesourcedb
 ! flagging_strategy        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/share/rfistrategies/HBAdefault
@@ -80,7 +80,7 @@
 ! error_tolerance           =  False
 ### Stuff that you probably don't need to modify
 # which steps to run
-pipeline.steps=[mk_inspect_dir, createmap_target, combine_target_map, sortmap_target, do_sortmap_maps, dpppconcat, eor_frequency_fix, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results]
+pipeline.steps=[mk_inspect_dir, createmap_target, combine_target_map, fix_frequencies, sortmap_target, do_sortmap_maps, dpppconcat, check_unflagged, check_unflagged_map, sky_tar, create_target_model_map, make_sourcedb_target, expand_sourcedb_target, gsmcal_parmmap, gsmcal_solve, gsmcal_apply, h5_imp_gsmsol_map, mk_results_dir, make_results_mapfile, move_results]
 
 # create the inspection_directory if needed
 mk_inspect_dir.control.kind               =  plugin
@@ -104,6 +104,12 @@ combine_target_map.control.method          =   mapfile_all_to_one
 combine_target_map.control.mapfile_dir     =   input.output.mapfile_dir
 combine_target_map.control.filename        =   combine_tar_map.mapfile
 combine_target_map.control.mapfile_in      =   createmap_target.output.mapfile
+
+fix_frequencies.control.kind               = pythonplugin
+fix_frequencies.control.executable         = {{ eor_fix_script }}
+fix_frequencies.argument.flags             = combine_target_map.output.mapfile
+fix_frequencies.argument.correct           = True
+fix_frequencies.argument.total_bandwidth   = 195312.5
 
 # sort the target data by frequency into groups so that NDPPP can concatenate them
 sortmap_target.control.type               =  pythonplugin
