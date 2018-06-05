@@ -96,6 +96,11 @@ createmap_target.control.filename        =   createmap_target.mapfile
 createmap_target.control.folder          =   {{ target_input_path }}
 createmap_target.control.pattern         =   {{ target_input_pattern }}
 
+fix_frequencies.control.kind               = pythonplugin
+fix_frequencies.control.executable         = {{ eor_fix_script }}
+fix_frequencies.argument.flags             = [createmap_target.output.mapfile]
+fix_frequencies.argument.correct           = True
+fix_frequencies.argument.total_bandwidth   = 195312.5
 
 # combine all entries into one mapfile, for the sortmap script
 combine_target_map.control.kind            =   plugin
@@ -105,16 +110,10 @@ combine_target_map.control.mapfile_dir     =   input.output.mapfile_dir
 combine_target_map.control.filename        =   combine_tar_map.mapfile
 combine_target_map.control.mapfile_in      =   createmap_target.output.mapfile
 
-fix_frequencies.control.kind               = pythonplugin
-fix_frequencies.control.executable         = {{ eor_fix_script }}
-fix_frequencies.argument.flags             = combine_target_map.output.mapfile
-fix_frequencies.argument.correct           = True
-fix_frequencies.argument.total_bandwidth   = 195312.5
-
 # sort the target data by frequency into groups so that NDPPP can concatenate them
 sortmap_target.control.type               =  pythonplugin
 sortmap_target.control.executable         =  {{ sortmap_script }}
-sortmap_target.argument.flags             =  [fix_frequencies.output.mapfile]
+sortmap_target.argument.flags             =  [combine_target_map.output.mapfile]
 sortmap_target.argument.filename          =  sortmap_target
 sortmap_target.argument.mapfile_dir       =  input.output.mapfile_dir
 sortmap_target.argument.target_path       =  input.output.working_directory/input.output.job_name

@@ -1,6 +1,7 @@
 from __future__ import print_function
 import argparse
 import ast
+import os
 
 import casacore.tables as ct
 import numpy as np
@@ -97,28 +98,52 @@ def find_nearest(value, arr):
     index = np.abs(array - value).argmin()
     return array[index]
 
-def main(msname, correct, total_bandwidth):
+def main(msname, correct, total_bandwidth, filename=None, mapfile_dir=None):
     correct = ast.literal_eval(correct)
     total_bandwidth = ast.literal_eval(total_bandwidth)
-    print('=')
-    print('= Opening {0:s} for correction.'.format(msname))
-    print('=')
     reffreqs = np.load('central_frequencies_000_319.npy')
-    with MS(msname) as ms:
-        print('Current total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(ms.bandwidth))
-        print('Required total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth))
-        print('Correction:'.ljust(30) + '{0:.6f} Hz.\n'.format(total_bandwidth - ms.bandwidth))
+    if type(msname) is list:
+        for msn in msname:
+            print('=')
+            print('= Opening {0:s} for correction.'.format(msn))
+            print('=')
+            with MS(msn) as ms:
+                print('Current total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(ms.bandwidth))
+                print('Required total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth))
+                print('Correction:'.ljust(30) + '{0:.6f} Hz.\n'.format(total_bandwidth - ms.bandwidth))
 
-        print('Current channel width:'.ljust(30) + '{0:.6f} Hz'.format(ms.channel_width))
-        print('Required channel width:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth / ms.channels))
-        print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(total_bandwidth / ms.channels - ms.channel_width))
+                print('Current channel width:'.ljust(30) + '{0:.6f} Hz'.format(ms.channel_width))
+                print('Required channel width:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth / ms.channels))
+                print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(total_bandwidth / ms.channels - ms.channel_width))
 
-        print('Current reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(ms.reference_frequency))
-        print('Nearest reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(find_nearest(ms.reference_frequency, reffreqs)))
-        print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(find_nearest(ms.reference_frequency, reffreqs) - ms.reference_frequency))
+                print('Current reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(ms.reference_frequency))
+                print('Nearest reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(find_nearest(ms.reference_frequency, reffreqs)))
+                print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(find_nearest(ms.reference_frequency, reffreqs) - ms.reference_frequency))
 
-        if correct:
-            ms.correct(correction_channel_width=(total_bandwidth / ms.channels - ms.channel_width), correction_total_bandwidth=(total_bandwidth - ms.bandwidth))
+                if correct:
+                    ms.correct(correction_channel_width=(total_bandwidth / ms.channels - ms.channel_width), correction_total_bandwidth=(total_bandwidth - ms.bandwidth))
+    elif type(msname) is str:
+        print('=')
+        print('= Opening {0:s} for correction.'.format(msname))
+        print('=')
+        with MS(msname) as ms:
+            print('Current total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(ms.bandwidth))
+            print('Required total bandwidth:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth))
+            print('Correction:'.ljust(30) + '{0:.6f} Hz.\n'.format(total_bandwidth - ms.bandwidth))
+
+            print('Current channel width:'.ljust(30) + '{0:.6f} Hz'.format(ms.channel_width))
+            print('Required channel width:'.ljust(30) + '{0:.6f} Hz'.format(total_bandwidth / ms.channels))
+            print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(total_bandwidth / ms.channels - ms.channel_width))
+
+            print('Current reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(ms.reference_frequency))
+            print('Nearest reference frequency:'.ljust(30) + '{0:.6f} Hz'.format(
+                find_nearest(ms.reference_frequency, reffreqs)))
+            print('Correction:'.ljust(30) + '{0:.6f} Hz\n'.format(
+                find_nearest(ms.reference_frequency, reffreqs) - ms.reference_frequency))
+
+            if correct:
+                ms.correct(correction_channel_width=(total_bandwidth / ms.channels - ms.channel_width),
+                           correction_total_bandwidth=(total_bandwidth - ms.bandwidth))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
