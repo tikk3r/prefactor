@@ -114,7 +114,7 @@ fix_frequencies.argument.total_bandwidth   = 195312.5
 # sort the target data by frequency into groups so that NDPPP can concatenate them
 sortmap_target.control.type               =  pythonplugin
 sortmap_target.control.executable         =  {{ sortmap_script }}
-sortmap_target.argument.flags             =  [combine_target_map.output.mapfile]
+sortmap_target.argument.flags             =  [fix_frequencies.output.mapfile]
 sortmap_target.argument.filename          =  sortmap_target
 sortmap_target.argument.mapfile_dir       =  input.output.mapfile_dir
 sortmap_target.argument.target_path       =  input.output.working_directory/input.output.job_name
