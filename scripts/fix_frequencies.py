@@ -144,6 +144,8 @@ def main(msname, correct, total_bandwidth, filename=None, mapfile_dir=None):
             if correct:
                 ms.correct(correction_channel_width=(total_bandwidth / ms.channels - ms.channel_width),
                            correction_total_bandwidth=(total_bandwidth - ms.bandwidth))
+    else:
+        raise ValueError('Unknown input type. Must be either str or list.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
