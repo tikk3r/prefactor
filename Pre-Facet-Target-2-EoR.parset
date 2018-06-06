@@ -65,6 +65,7 @@
 ! structurefunction_script = PREFACTOR_SCRATCH_DIR/prefactor/scripts/getStructure_from_phases.py
 ! plotphases_script        = PREFACTOR_SCRATCH_DIR/prefactor/scripts/plot_solutions_all_stations.py
 ! eor_fix_script           = PREFACTOR_SCRATCH_DIR/prefactor/scripts/fix_frequencies.py
+! eor_reference_frequencies= PREFACTOR_SCRATCH_DIR/prefactor/scripts/central_frequencies_000_319.npy
 ! losoto_executable        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/local/release/bin/losoto
 ! makesourcedb             = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/bin/makesourcedb
 ! flagging_strategy        = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/lofar/release/share/rfistrategies/HBAdefault
@@ -101,6 +102,7 @@ fix_frequencies.control.executable         = {{ eor_fix_script }}
 fix_frequencies.argument.flags             = [createmap_target.output.mapfile]
 fix_frequencies.argument.correct           = True
 fix_frequencies.argument.total_bandwidth   = 195312.5
+fix_frequencies.argument.reference_array   = {{ eor_reference_frequencies }}
 
 # combine all entries into one mapfile, for the sortmap script
 combine_target_map.control.kind            =   plugin
@@ -108,7 +110,7 @@ combine_target_map.control.type            =   createMapfile
 combine_target_map.control.method          =   mapfile_all_to_one
 combine_target_map.control.mapfile_dir     =   input.output.mapfile_dir
 combine_target_map.control.filename        =   combine_tar_map.mapfile
-combine_target_map.control.mapfile_in      =   createmap_target.output.mapfile
+combine_target_map.control.mapfile_in      =   fix_frequencies.output.mapfile
 
 # sort the target data by frequency into groups so that NDPPP can concatenate them
 sortmap_target.control.type               =  pythonplugin

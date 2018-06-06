@@ -98,10 +98,10 @@ def find_nearest(value, arr):
     index = np.abs(array - value).argmin()
     return array[index]
 
-def main(msname, correct, total_bandwidth, filename=None, mapfile_dir=None):
+def main(msname, correct, total_bandwidth, reference_array='central_frequencies_000_319.npy'):
     correct = ast.literal_eval(correct)
     total_bandwidth = ast.literal_eval(total_bandwidth)
-    reffreqs = np.load('central_frequencies_000_319.npy')
+    reffreqs = np.load(reference_array)
     if type(msname) is list:
         for msn in msname:
             print('=')
