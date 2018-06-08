@@ -97,7 +97,8 @@ createmap_target.control.filename        =   createmap_target.mapfile
 createmap_target.control.folder          =   {{ target_input_path }}
 createmap_target.control.pattern         =   {{ target_input_pattern }}
 
-fix_frequencies.control.kind               = pythonplugin
+# Fix the frequencies of an EoR measurement set.
+fix_frequencies.control.type               = pythonplugin
 fix_frequencies.control.executable         = {{ eor_fix_script }}
 fix_frequencies.argument.flags             = [createmap_target.output.mapfile]
 fix_frequencies.argument.correct           = True
