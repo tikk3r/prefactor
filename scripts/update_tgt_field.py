@@ -5,8 +5,9 @@ import casacore.tables as ct
 
 def main(msname, newtarget):
     ms = msname.rstrip('/')
-    tab = ct.table(ms)
-    ct.taql('UPDATE LOFAR_TARGET SET [' + newtarget + '] FROM ' + ms + '::OBSERVATION')
+    tab = ct.table(ms + '::OBSERVATION', readonly=False)
+    tab.putcell('LOFAR_TARGET', 0, newtarget)
+    tab.close()
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
