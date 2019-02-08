@@ -14,7 +14,7 @@
 ### parameters you will need to adjust.
 # averaging for the calibrator data
 ! avg_timestep         = 2   # averaging step needed to average the data to 4 seconds time resolution
-! avg_freqstep         = 2   # averaging step needed to average the data to 4 ch/SB frequency resolution
+! avg_freqstep         = 3   # averaging step needed to average the data to 4 ch/SB frequency resolution
 # where to find the calibrator data
 ! cal_input_path       = PREFACTOR_SCRATCH_DIR/Input
 ! cal_input_pattern    = *MS
@@ -41,6 +41,7 @@
 ! fit_XYoffset_script       = PREFACTOR_SCRATCH_DIR/prefactor/scripts/find_cal_global_phaseoffset_losoto.py
 ! plotphases_script         = PREFACTOR_SCRATCH_DIR/prefactor/scripts/plot_solutions_all_stations.py
 ! losoto_executable         = /cvmfs/softdrive.nl/lofar_sw/LOFAR/2.20.2/local/release/bin/losoto
+! eor_fix_script = PREFACTOR_SCRATCH_DIR/prefactor/scripts/check_frequencies.py
 
 # number of processes to use per step per node
 ! num_proc_per_node        = 2
@@ -54,7 +55,7 @@
 
 ### Stuff that you probably don't need to modify
 # which steps to run 
-pipeline.steps=[createmap_cal, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal] 
+pipeline.steps=[createmap_cal, eof_frequency_fix, ndppp_prep_cal, combine_data_cal_map, sky_cal, sky_cal_path, calib_cal] 
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind            =   plugin
@@ -64,6 +65,15 @@ createmap_cal.control.mapfile_dir     =   input.output.mapfile_dir
 createmap_cal.control.filename        =   createmap_cal.mapfile
 createmap_cal.control.folder          =   {{ cal_input_path }}
 createmap_cal.control.pattern         =   {{ cal_input_pattern }}
+
+# Adjust the frequency channels to avoid problems later on.
+eor_frequency_fix.control.type             = pythonplugin
+eor_frequency_fix.control.executable       = {{ eor_fix_script }}
+eor_frequency_fix.argument.flags           = createmap_cal.output.mapfile
+eor_frequency_fix.argument.correct         = True
+eor_frequency_fix.argument.widths          = True
+eor_frequency_fix.argument.ref-frequency   = True
+eor_frequency_fix.argument.total-bandwidth = True
 
 # run NDPPP on the calibrator data
 ndppp_prep_cal.control.type                    = dppp
