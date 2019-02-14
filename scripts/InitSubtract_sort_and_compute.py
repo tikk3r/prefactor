@@ -56,23 +56,14 @@ class Band(object):
             self.cellsize_lowres_deg = cellsize_lowres_deg
         if not hasattr(self, 'mean_el_rad'):
             for MS_id in xrange(self.numMS):
-                # Add (virtual) elevation column to MS
-                try:
-                    pt.addDerivedMSCal(self.files[MS_id])
-                except RuntimeError:
-                    # RuntimeError indicates column already exists
-                    pass
-
                 # calculate mean elevation
                 tab = pt.table(self.files[MS_id], ack=False)
+                el_values = pt.taql("SELECT mscal.azel1()[1] AS el from "
+                                    + self.files[MS_id] + " limit ::10000").getcol("el")
                 if MS_id == 0:
-                    global_el_values = tab.getcol('AZEL1', rowincr=10000)[:, 1]
+                    global_el_values = el_values
                 else:
-                    global_el_values = np.hstack( (global_el_values, tab.getcol('AZEL1', rowincr=10000)[:, 1]) )
-                tab.close()
-
-                # Remove (virtual) elevation column from MS
-                pt.removeDerivedMSCal(self.files[MS_id])
+                    global_el_values = np.hstack( (global_el_values, el_values ) )
             self.mean_el_rad = np.mean(global_el_values)
 
         # Calculate mean FOV
@@ -308,27 +299,34 @@ def main(ms_input, outmapname=None, mapfile_dir=None, cellsize_highres_deg=0.002
             if i == 0:
                 y_axis_stretch = 1.0 / np.sin(band.mean_el_rad)
                 print "InitSubtract_sort_and_compute.py: Using y-axis stretch of:",y_axis_stretch
+                y_axis_stretch_lowres = y_axis_stretch
+                y_axis_stretch_highres = y_axis_stretch
+        else:
+            y_axis_stretch_lowres = 1.0
+            y_axis_stretch_highres = 1.0
 
         # Adjust sizes so that we get the correct ones below
-        if apply_y_axis_stretch_highres:
-            imsize_high_res /= y_axis_stretch
-        if apply_y_axis_stretch_lowres:
-            imsize_low_res /= y_axis_stretch
+        if not apply_y_axis_stretch_highres:
+            y_axis_stretch_highres = 1.0
+        if not apply_y_axis_stretch_lowres:
+            y_axis_stretch_lowres = 1.0
+        imsize_low_res /= y_axis_stretch_lowres
+        imsize_high_res /= y_axis_stretch_highres
 
         imsize_high_res = band.get_optimum_size(int(imsize_high_res))
-        imsize_high_res_stretch = band.get_optimum_size(int(imsize_high_res*y_axis_stretch))
+        imsize_high_res_stretch = band.get_optimum_size(int(imsize_high_res*y_axis_stretch_highres))
         high_size_map.append(DataProduct('localhost', str(imsize_high_res)+" "+str(imsize_high_res_stretch), False))
 
         imsize_low_res = band.get_optimum_size(int(imsize_low_res))
-        imsize_low_res_stretch = band.get_optimum_size(int(imsize_low_res*y_axis_stretch))
+        imsize_low_res_stretch = band.get_optimum_size(int(imsize_low_res*y_axis_stretch_lowres))
         low_size_map.append(DataProduct('localhost', str(imsize_low_res)+" "+str(imsize_low_res_stretch), False))
 
         imsize_high_pad = band.get_optimum_size(int(imsize_high_res*image_padding))
-        imsize_high_pad_stretch = band.get_optimum_size(int(imsize_high_res*image_padding*y_axis_stretch))
+        imsize_high_pad_stretch = band.get_optimum_size(int(imsize_high_res*image_padding*y_axis_stretch_highres))
         high_paddedsize_map.append(DataProduct('localhost', str(imsize_high_pad)+" "+str(imsize_high_pad_stretch), False))
 
         imsize_low_pad = band.get_optimum_size(int(imsize_low_res*image_padding))
-        imsize_low_pad_stretch = band.get_optimum_size(int(imsize_low_res*image_padding*y_axis_stretch))
+        imsize_low_pad_stretch = band.get_optimum_size(int(imsize_low_res*image_padding*y_axis_stretch_lowres))
         low_paddedsize_map.append(DataProduct('localhost', str(imsize_low_pad)+" "+str(imsize_low_pad_stretch), False))
 
     print "InitSubtract_sort_and_compute.py: Computing averaging steps."
