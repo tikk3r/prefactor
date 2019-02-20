@@ -66,7 +66,7 @@ pipeline.pluginpath        =  {{ prefactor_directory }}/plugins
 ########################################################
 
 # which steps to run
-pipeline.steps=[createmap_cal, h5_imp_cal_map, h5imp_cal, prepare_losoto, process_losoto, mk_cal_values_dir, copy_cal_h5]
+pipeline.steps=[createmap_cal, calib_cal_parmmap, h5_imp_cal_map, h5imp_cal, prepare_losoto, process_losoto, mk_cal_values_dir, copy_cal_h5]
 
 # generate a mapfile of all the calibrator data
 createmap_cal.control.kind                           =   plugin
@@ -76,6 +76,15 @@ createmap_cal.control.mapfile_dir                    =   input.output.mapfile_di
 createmap_cal.control.filename                       =   createmap_cal.mapfile
 createmap_cal.control.folder                         =   {{ cal_input_path }}
 createmap_cal.control.pattern                        =   {{ cal_input_pattern }}
+
+# generate mapfile with the h5parm names to be used in the calib_cal steps
+calib_cal_parmmap.control.kind                       =   plugin
+calib_cal_parmmap.control.type                       =   createMapfile
+calib_cal_parmmap.control.method                     =   add_suffix_to_file
+calib_cal_parmmap.control.mapfile_in                 =   createmap_cal.output.mapfile
+calib_cal_parmmap.control.add_suffix_to_file         =   /instrument.h5
+calib_cal_parmmap.control.mapfile_dir                =   input.output.mapfile_dir
+calib_cal_parmmap.control.filename                   =   calib_cal_h5parms.mapfile
 
 # generate a mapfile with all files in a single entry
 h5_imp_cal_map.control.kind                          =   plugin
