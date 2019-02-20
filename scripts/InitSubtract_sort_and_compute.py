@@ -56,23 +56,14 @@ class Band(object):
             self.cellsize_lowres_deg = cellsize_lowres_deg
         if not hasattr(self, 'mean_el_rad'):
             for MS_id in xrange(self.numMS):
-                # Add (virtual) elevation column to MS
-                try:
-                    pt.addDerivedMSCal(self.files[MS_id])
-                except RuntimeError:
-                    # RuntimeError indicates column already exists
-                    pass
-
                 # calculate mean elevation
                 tab = pt.table(self.files[MS_id], ack=False)
+                el_values = pt.taql("SELECT mscal.azel1()[1] AS el from "
+                                    + self.files[MS_id] + " limit ::10000").getcol("el")
                 if MS_id == 0:
-                    global_el_values = tab.getcol('AZEL1', rowincr=10000)[:, 1]
+                    global_el_values = el_values
                 else:
-                    global_el_values = np.hstack( (global_el_values, tab.getcol('AZEL1', rowincr=10000)[:, 1]) )
-                tab.close()
-
-                # Remove (virtual) elevation column from MS
-                pt.removeDerivedMSCal(self.files[MS_id])
+                    global_el_values = np.hstack( (global_el_values, el_values ) )
             self.mean_el_rad = np.mean(global_el_values)
 
         # Calculate mean FOV
@@ -310,6 +301,9 @@ def main(ms_input, outmapname=None, mapfile_dir=None, cellsize_highres_deg=0.002
                 print "InitSubtract_sort_and_compute.py: Using y-axis stretch of:",y_axis_stretch
                 y_axis_stretch_lowres = y_axis_stretch
                 y_axis_stretch_highres = y_axis_stretch
+        else:
+            y_axis_stretch_lowres = 1.0
+            y_axis_stretch_highres = 1.0
 
         # Adjust sizes so that we get the correct ones below
         if not apply_y_axis_stretch_highres:
