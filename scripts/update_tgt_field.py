@@ -4,10 +4,10 @@ import argparse
 import casacore.tables as ct
 
 def input2strlist_nomapfile(invar):
-   """ 
-   from bin/download_IONEX.py
-   give the list of MSs from the list provided as a string
-   """
+    """ 
+    from bin/download_IONEX.py
+    give the list of MSs from the list provided as a string
+    """
     str_list = None
     if type(invar) is str:
         if invar.startswith('[') and invar.endswith(']'):
