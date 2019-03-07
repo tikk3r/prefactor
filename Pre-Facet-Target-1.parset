@@ -79,7 +79,7 @@
 ##########################################
 
 ## main directories
-! lofar_directory           =  /opt/lofar/lofar                       ## base directory of your LOFAR installation
+! lofar_directory           =  $LOFARROOT                             ## base directory of your LOFAR installation
 ! job_directory             =  input.output.job_directory             ## directory of the prefactor outputs
 
 ## script and plugin directories
