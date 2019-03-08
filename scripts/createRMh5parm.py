@@ -66,7 +66,6 @@ def main(MSfiles, h5parmdb, solset_name = "sol000",all_stations=False,timestep=3
     '''
     
     mslist = MSfiles.lstrip('[').rstrip(']').replace(' ','').replace("'","").split(',')
-    logging.INFO('Using RMextract from: ' + RMextract.__file__)
     
     if len(mslist) == 0:
         raise ValueError("Did not find any existing directory in input MS list!")
