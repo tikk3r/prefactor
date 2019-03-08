@@ -8,6 +8,8 @@ Created on Tue Aug 7 11:46:57 2018
 
 @author: mevius
 """
+import RMextract
+print(RMextract.__file__)
 from losoto.h5parm import h5parm
 from RMextract import getRM
 from RMextract import PosTools
