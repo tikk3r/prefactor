@@ -9,7 +9,6 @@ Created on Tue Aug 7 11:46:57 2018
 @author: mevius
 """
 import RMextract
-print(RMextract.__file__)
 from losoto.h5parm import h5parm
 from RMextract import getRM
 from RMextract import PosTools
@@ -67,6 +66,7 @@ def main(MSfiles, h5parmdb, solset_name = "sol000",all_stations=False,timestep=3
     '''
     
     mslist = MSfiles.lstrip('[').rstrip(']').replace(' ','').replace("'","").split(',')
+    logging.INFO('Using RMextract from: ' + RMextract.__file__)
     
     if len(mslist) == 0:
         raise ValueError("Did not find any existing directory in input MS list!")
