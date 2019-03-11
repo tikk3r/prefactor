@@ -116,6 +116,10 @@ pipeline.pluginpath         =  {{ prefactor_directory }}/plugins
 ! ionex_prefix              =  CODG                                   ## the prefix of the IONEX files
 ! ionex_path                =  {{ job_directory }}/IONEX/             ## path where the IONEX files can be stored or are already stored
 
+## EoR NCP specific settings.
+! eor_fix_script            = PREFACTOR_SCRATCH_DIR/prefactor/scripts/fix_frequencies.py
+! eor_reference_frequencies = PREFACTOR_SCRATCH_DIR/prefactor/scripts/central_frequencies_000_319.npy
+
 ########################################################
 ##                                                    ##
 ##    BEGIN PIPELINE: DO NOT UPDATE BELOW THIS LINE!  ##
@@ -123,7 +127,7 @@ pipeline.pluginpath         =  {{ prefactor_directory }}/plugins
 ########################################################
 
 # which steps to run
-pipeline.steps              =  [prep, {{ clipATeam }} concat, finalize]
+pipeline.steps              =  [prep, {{ clipATeam }}, finalize]
 
 # pipeline substeps
 pipeline.steps.prep         =  [createmap_target, get_targetname, combine_data_target_map, check_Ateam_separation, mk_targ_values_dir, copy_cal_sols, check_station_mismatch, createmap_preptarg, createmap_insttarg, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, h5imp_RMextract, prepare_losoto_RMextract, process_losoto_RMextract, ndppp_prep_target]
@@ -144,6 +148,14 @@ createmap_target.control.mapfile_dir                           =   input.output.
 createmap_target.control.filename                              =   createmap_target.mapfile
 createmap_target.control.folder                                =   {{ target_input_path }}
 createmap_target.control.pattern                               =   {{ target_input_pattern }}
+
+# Fix the subband gaps in EoR data.
+fix_frequencies.control.type               = pythonplugin
+fix_frequencies.control.executable         = {{ eor_fix_script }}
+fix_frequencies.argument.flags             = [createmap_target.output.mapfile]
+fix_frequencies.argument.correct           = True
+fix_frequencies.argument.total_bandwidth   = 195312.5
+fix_frequencies.argument.reference_array   = {{ eor_reference_frequencies }}
 
 # get the target name
 get_targetname.control.kind                                    =   plugin
