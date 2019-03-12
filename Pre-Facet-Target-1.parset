@@ -127,10 +127,10 @@ pipeline.pluginpath         =  {{ prefactor_directory }}/plugins
 ########################################################
 
 # which steps to run
-pipeline.steps              =  [prep, {{ clipATeam }}, finalize]
+pipeline.steps              =  [prep, {{ clipATeam }} finalize]
 
 # pipeline substeps
-pipeline.steps.prep         =  [createmap_target, get_targetname, combine_data_target_map, check_Ateam_separation, mk_targ_values_dir, copy_cal_sols, check_station_mismatch, createmap_preptarg, createmap_insttarg, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, h5imp_RMextract, prepare_losoto_RMextract, process_losoto_RMextract, ndppp_prep_target]
+pipeline.steps.prep         =  [createmap_target, fix_frequencies, get_targetname, combine_data_target_map, check_Ateam_separation, mk_targ_values_dir, copy_cal_sols, check_station_mismatch, createmap_preptarg, createmap_insttarg, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, h5imp_RMextract, prepare_losoto_RMextract, process_losoto_RMextract, ndppp_prep_target]
 
 pipeline.steps.clipATeam    =  [predict_ateam, ateamcliptar]
 
@@ -406,7 +406,7 @@ make_results_mapfile_uncor.control.kind                        =   plugin
 make_results_mapfile_uncor.control.type                        =   makeResultsMapfile
 make_results_mapfile_uncor.control.mapfile_dir                 =   input.output.mapfile_dir
 make_results_mapfile_uncor.control.filename                    =   make_results_mapfile2.mapfile
-make_results_mapfile_uncor.control.mapfile_in                  =   check_unflagged_map.output.mapfile
+make_results_mapfile_uncor.control.mapfile_in                  =   ndppp_prep_target.output.mapfile
 make_results_mapfile_uncor.control.target_dir                  =   {{ results_directory }}
 make_results_mapfile_uncor.control.make_target_dir             =   True
 make_results_mapfile_uncor.control.new_suffix                  =   .uncorr.ms
