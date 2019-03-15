@@ -416,7 +416,7 @@ move_results_uncor.control.kind                                =   recipe
 move_results_uncor.control.type                                =   executable_args
 move_results_uncor.control.executable                          =   /bin/mv
 move_results_uncor.control.max_per_node                        =   {{ num_proc_per_node_limit }}
-move_results_uncor.control.mapfiles_in                         =   [check_unflagged_map.output.mapfile,make_results_mapfile_uncor.output.mapfile]
+move_results_uncor.control.mapfiles_in                         =   [ndppp_prep_target.output.mapfile,make_results_mapfile_uncor.output.mapfile]
 move_results_uncor.control.inputkeys                           =   [source,destination]
 move_results_uncor.control.arguments                           =   [source,destination]
 
