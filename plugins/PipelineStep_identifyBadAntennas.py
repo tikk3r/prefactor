@@ -39,9 +39,9 @@ def plugin_main(args, **kwargs):
     pool = multiprocessing.Pool(processes = multiprocessing.cpu_count())
     flaggedants_list = pool.map(find_flagged_antennas, mslist)
     
-    flagged_antennas = flaggedants_list[0]
+    flagged_antennas = []
        
-    for flagged_antenna_list in flaggedants_list[1:]:
+    for flagged_antenna_list in flaggedants_list:
         flagged_antenna_list = list(set(flagged_antennas).intersection(flagged_antenna_list))
         pass
     
