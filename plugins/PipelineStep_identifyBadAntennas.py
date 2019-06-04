@@ -40,6 +40,7 @@ def plugin_main(args, **kwargs):
     flaggedants_list = pool.map(find_flagged_antennas, mslist)
    
     flagged_antenna_list = set.intersection(*map(set, flaggedants_list)) 
+    print(flagged_antenna_list)
     #Finding common entry in list of lists: https://stackoverflow.com/a/10066921
 
     for flagged_antenna in flagged_antenna_list:
