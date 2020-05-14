@@ -61,7 +61,7 @@ def plugin_main(args, **kwargs):
                     raise ValueError('PipelineStep_reGroupMapfile: basenames {0} and {1} differ'.format(refbase,newbase))
             grouplist.append(inmap[inindex].file)
             if inmap[inindex].skip:
-                print('PipelineStep_reGroupMapfile: Skipping full group for file:'+inmap[inindex].file)
+                print 'PipelineStep_reGroupMapfile: Skipping full group for file:'+inmap[inindex].file
                 skip = True
             inindex += 1
         map_out.data.append(MultiDataProduct(group.host, grouplist, skip))
@@ -73,7 +73,7 @@ def plugin_main(args, **kwargs):
         groups_to_join =  int(kwargs['join_groups'])
         if groups_to_join > 1:
             newmap = MultiDataMap([])
-            for start_idx in range(0,len(map_out),groups_to_join):
+            for start_idx in xrange(0,len(map_out),groups_to_join):
                 end_idx = min((start_idx+groups_to_join),len(map_out))
                 grouplist = []
                 for group in map_out[start_idx:end_idx]:
@@ -88,7 +88,7 @@ def plugin_main(args, **kwargs):
         newmap = MultiDataMap([])
         grouplist = map_out[0].file
         grouphost = map_out[0].host
-        for gindex in range(1,len(map_out)):
+        for gindex in xrange(1,len(map_out)):
             if map_out[gindex].skip:
                 raise ValueError("PipelineStep_reGroupMapfile: Found group that should be skipped! "
                                  "(I.e. there is probably something wrong with your data!)")
@@ -109,7 +109,7 @@ def plugin_main(args, **kwargs):
     return result
 
 def string2bool(instring):
-    if not isinstance(instring, str):
+    if not isinstance(instring, basestring):
         raise ValueError('string2bool: Input is not a basic string!')
     if instring.upper() == 'TRUE' or instring == '1':
         return True
@@ -154,13 +154,13 @@ class MultiDataProduct(DataProduct):
             raise DataProduct("No known method to set a filelist from %s" % str(file))
 
     def _from_dataproduct(self, prod):
-        print('setting filelist from DataProduct')
+        print 'setting filelist from DataProduct'
         self.host = prod.host
         self.file = prod.file
         self.skip = prod.skip
 
     def _from_datamap(self, inmap):
-        print('setting filelist from DataMap')
+        print 'setting filelist from DataMap'
         filelist = {}
         for item in inmap:
             if not item.host in filelist:
@@ -202,7 +202,7 @@ class MultiDataMap(DataMap):
                     mdpdict[item.host] = []
                 mdpdict[item.host].append(item.file)
             mdplist = []
-            for k, v in mdpdict.items():
+            for k, v in mdpdict.iteritems():
                 mdplist.append(MultiDataProduct(k, v, False))
             self._set_data(mdplist, dtype=MultiDataProduct)
         elif isinstance(data, MultiDataProduct):
@@ -215,7 +215,7 @@ class MultiDataMap(DataMap):
     def split_list(self, number):
         mdplist = []
         for item in self.data:
-            for i in range(0, len(item.file), number):
+            for i in xrange(0, len(item.file), number):
                 chunk = item.file[i:i+number]
                 mdplist.append(MultiDataProduct(item.host, chunk, item.skip))
         self._set_data(mdplist)

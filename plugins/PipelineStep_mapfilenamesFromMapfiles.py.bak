@@ -30,13 +30,13 @@ def plugin_main(args, **kwargs):
     result = {}
     mapfile_keys = []
     
-    for keyname in list(kwargs.keys()):
+    for keyname in kwargs.keys():
         if keyname[0:8] == "mapfile_":
             mapfile_keys.append(keyname)
             if len(keyname) < 10:
                 raise ValueError("MapfilenamesFromMapfiles: Key: "+keyname+" is too short!")
         else:
-            print("MapfilenamesFromMapfiles: input key:",keyname,"in unkown!")
+            print "MapfilenamesFromMapfiles: input key:",keyname,"in unkown!"
     for keyname in mapfile_keys:
         inmap = DataMap.load(kwargs[keyname])
         if len(inmap) != 1:
@@ -46,7 +46,7 @@ def plugin_main(args, **kwargs):
     return result
 
 def string2bool(instring):
-    if not isinstance(instring, str):
+    if not isinstance(instring, basestring):
         raise ValueError('string2bool: Input is not a basic string!')
     if instring.upper() == 'TRUE' or instring == '1':
         return True

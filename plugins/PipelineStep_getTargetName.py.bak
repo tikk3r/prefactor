@@ -4,14 +4,13 @@ Identify fully flagged antennas
 """
 
 from lofarpipe.support.data_map import DataMap, DataProduct
-import os
-import multiprocessing
+import pyrap.tables
 
 def find_flagged_antennas(ms_file):
     
-   print('Reading ' + str(ms_file))
+   print 'Reading ' + str(ms_file)
    outputs = os.popen('DPPP msin=' + ms_file + ' msout=. steps=[count] count.type=counter count.warnperc=100 | grep NOTE').readlines()
-   flaggedants = [ output.split('(')[-1].rstrip(')\n') for output in outputs if 'station' in output ]
+   flaggedants = [ output.split('(')[-1].rstrip(')\n') for output in outputs ]
    return flaggedants
 
 def plugin_main(args, **kwargs):
@@ -32,23 +31,15 @@ def plugin_main(args, **kwargs):
         Output station names to filter
     """
     mapfile_in     = kwargs['mapfile_in']
-    filter         = kwargs['filter']
     data           = DataMap.load(mapfile_in)
-    mslist         = [data[i].file for i in range(len(data))]
-     
-    pool = multiprocessing.Pool(processes = multiprocessing.cpu_count())
-    flaggedants_list = pool.map(find_flagged_antennas, mslist)
-   
-    flagged_antenna_list = set.intersection(*list(map(set, flaggedants_list))) 
-
-    for flagged_antenna in flagged_antenna_list:
-        filter += ';!' + flagged_antenna + '*&&*'
-        pass
+    mslist         = [data[i].file for i in xrange(len(data))]
+    msfile         = mslist[0]
     
-    print('Identified bad antennas: ' + str(flagged_antenna_list))
-    
+    observationTable = pyrap.tables.table(msfile + '::OBSERVATION')
+    targetName       = observationTable.getcol('LOFAR_TARGET')['array'][0]
+        
     ## return results
-    result = {'filter':str(filter)}
+    result = {'targetName':targetName}
     return result
     
     pass    

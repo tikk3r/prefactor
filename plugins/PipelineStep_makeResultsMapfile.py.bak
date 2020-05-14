@@ -28,7 +28,7 @@ def plugin_main(args, **kwargs):
     return result
 
 def string2bool(instring):
-    if not isinstance(instring, str):
+    if not isinstance(instring, basestring):
         raise ValueError('string2bool: Input is not a basic string!')
     if instring.upper() == 'TRUE' or instring == '1':
         return True

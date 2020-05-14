@@ -8,7 +8,7 @@ import pyrap.tables
 
 def find_flagged_antennas(ms_file):
     
-   print 'Reading ' + str(ms_file)
+   print('Reading ' + str(ms_file))
    outputs = os.popen('DPPP msin=' + ms_file + ' msout=. steps=[count] count.type=counter count.warnperc=100 | grep NOTE').readlines()
    flaggedants = [ output.split('(')[-1].rstrip(')\n') for output in outputs ]
    return flaggedants
@@ -32,7 +32,7 @@ def plugin_main(args, **kwargs):
     """
     mapfile_in     = kwargs['mapfile_in']
     data           = DataMap.load(mapfile_in)
-    mslist         = [data[i].file for i in xrange(len(data))]
+    mslist         = [data[i].file for i in range(len(data))]
     msfile         = mslist[0]
     
     observationTable = pyrap.tables.table(msfile + '::OBSERVATION')

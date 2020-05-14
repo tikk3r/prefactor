@@ -13,7 +13,7 @@ def plugin_main(args, **kwargs):
 		parset_dict[step.strip()] = {}
 		pass
     
-	for key in list(kwargs.keys()):
+	for key in kwargs.keys():
 		keyword = key.split('.')[0]
 		option  = key.split(keyword + '.')[-1]
 		value   = kwargs[key]
@@ -31,7 +31,7 @@ def plugin_main(args, **kwargs):
 
 	for step in steps:
 		parset_file.write('[' + step + ']\n')
-		if step in list(parset_dict.keys()):
+		if step in parset_dict.keys():
 			for option in parset_dict[step]: 
 				parset_file.write(option.replace(';','.') + ' = ' + parset_dict[step][option] + '\n')
 				pass
