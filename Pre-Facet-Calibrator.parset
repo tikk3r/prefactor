@@ -1,5 +1,5 @@
 ##########################################################################
-# Pre-Facet Calibrator Calibration Pipeline                              #
+# Pre-Facet Calibrator Calibration Pipeline v3.0 (04/09/2019)            #
 #                                                                        #
 # Calibrator part of the basic Pre-Facet calibration pipeline:           #
 # - requires LOFAR software version  >= 3.1.0                            #
@@ -25,17 +25,23 @@
 ### parameters you may need to adjust   ##
 ##########################################
 
-! refant                   =  'CS001HBA0'                                                         ## name of the station that will be used as a reference for the phase-plots
+! refant                   =  'CS001HBA0'                                                         ## name of the station that will be used as a reference for the phase-plots, 'closest' will reference to the spatially closest unflagged antenna
 ! flag_baselines           =  []                                                                  ## NDPPP-compatible pattern for baselines or stations to be flagged (may be an empty list, i.e.: [] )
-! filter_baselines         =  [CR]S*&                                                             ## selects only this set of baselines to be processed. Choose [CR]S*& if you want to process only cross-correlations and remove international stations.
+! process_baselines_cal    =  *&                                                                  ## performs A-Team-clipping/demixing and direction-independent phase-only self-calibration only on these baselines. Choose [CR]S*& if you want to process only cross-correlations and remove international stations.
+! filter_baselines         =  {{ process_baselines_cal }}                                         ## selects only this set of baselines to be processed. Choose [CR]S*& if you want to process only cross-correlations and remove international stations.
 ! do_smooth                =  False                                                               ## enable or disable baseline-based smoothing
 ! rfistrategy              =  HBAdefault.rfis                                                     ## strategy to be applied with the statistical flagger (AOFlagger)
 ! max2interpolate          =  30                                                                  ## amount of channels in which interpolation should be performed for deriving the bandpass
-! interp_windowsize        =  15                                                                  ## Size of the window over which a value is interpolated. Should be odd.
-! ampRange                 =  [50,200]                                                            ## range of median amplitudes accepted per station
+! ampRange                 =  [0, 0]                                                              ## range of median amplitudes accepted per station. Use [0, 0] to use typical ranges of [50, 225] for the current correlator or [0.0004, 0.0018] for the old one.
 ! skip_international       =  True                                                                ## skip fitting the bandpass for international stations (this avoids flagging them in many cases)
 ! raw_data                 =  False                                                               ## use autoweight, set to True in case you are using raw data
 ! propagatesolutions       =  True                                                                ## use already derived solutions as initial guess for the upcoming time slot
+! flagunconverged          =  False                                                               ## flag solutions for solves that did not converge (if they were also detected to diverge)
+! maxStddev                =  -1.0                                                                ## Maximum allowable standard deviation when outlier clipping is done. For phases, this should value should be in radians, for amplitudes in log(amp). If None (or negative), a value of 0.1 rad is used for phases and 0.01 for amplitudes
+
+# options for solution transfer (for non-trusted calibrator observations)
+! solutions2transfer       =  {{ prefactor_directory }}/solutions/3C48.h5                         ## location of h5parm reference solutions to transfer
+! antennas2transfer        =  [FUSPID].*                                                          ## regular expression of antennas which solutions should be transferred to the final solution set, if none of the trusted calibrators have been observed (by default: all international stations)
 
 # demixing options (only used if demix step is added to the prep_cal_strategy variable)
 ! demix_sources            =  [CasA,CygA]                                                         ## choose sources to demix (provided as list)
@@ -55,7 +61,7 @@
 # pipeline options
 ! initial_flagging         =  {{ default_flagging }}                                              ## choose {{ raw_flagging }} if you process raw data
 ! demix_step               =  {{ none }}                                                          ## choose {{ demix }} if you want to demix
-! cal_ion                  =  {{ 1st_order }}                                                     ## choose {{ 3rd_order }} if you want to include 3rd order ionospheric effects (may be useful for LBA < 35 MHz)
+! cal_ion                  =  {{ 1st_order }},smooth                                              ## choose {{ 3rd_order }} if you want to include 3rd order ionospheric effects (may be useful for LBA < 35 MHz), add smooth if you want to use the median of the clock in time (suggested for HBA+LB)
 ! tables2export            =  clock                                                               ## comma-separated list of tables to export from the ionospheric calibration step (cal_ion)
 ! final_apply              =  {{ none }}                                                          ## choose {{ full_apply }} if you want to apply all extracted solutions to the calibrator field
 
@@ -68,7 +74,9 @@
 ! max_dppp_threads         =  10                                                                  ## number of threads per process for NDPPP
 ! memoryperc               =  20                                                                  ## maximum of memory used for aoflagger in raw_flagging mode in percent
 ! min_length               =  50                                                                  ## minimum amount of subbands to concatenate in frequency necessary to perform the wide-band flagging in the RAM. It data is too big aoflag will use indirect-read.
+! overhead                 =  0.8                                                                 ## Only use this fraction of the available memory for deriving the amount of data to be concatenated.
 ! min_separation           =  30                                                                  ## minimal accepted distance to an A-team source on the sky in degrees (will raise a WARNING)
+! max_separation_arcmin    =  1.0                                                                 ## maximum distance to the phase center for which a skymodel will be still accepted. Change with caution!
 
 ! error_tolerance          =  False                                                               ## set this to True if you want the pipeline run to continue if single bands fail
 
@@ -79,6 +87,9 @@
 ## main directories
 ! lofar_directory          =  $LOFARROOT                                                          ## base directory of your LOFAR installation
 ! job_directory            =  input.output.job_directory                                          ## directory of the prefactor outputs
+! working_directory        =  input.output.working_directory/input.output.job_name                ## specify the working_directory (intermediate data products)
+! log_file                 =  input.output.log_file                                               ## location of the logfile
+! mapfile_dir              =  input.output.mapfile_dir                                            ## specify mapfile directory
 
 ## script and plugin directories
 ! scripts                  =  {{ prefactor_directory }}/scripts
@@ -112,13 +123,13 @@ pipeline.steps             =  [prep, PA, FR, bandpass, ion, finalize]
 
 
 # pipeline substeps
-pipeline.steps.prep        =  [createmap_cal, combine_data_map, check_Ateam_separation, mk_cal_values_dir, createmap_prepcal, createmap_instcal, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, ndppp_prep_cal, combine_data_cal_map, ms_concat, ms_concat_map, expand_memory_map, aoflag, sky_cal, make_sourcedb, expand_sourcedb, expand_skymodel, calib_cal_parmmap, h5imp_cal_map, interp_cal, smooth_data, predict_cal]
+pipeline.steps.prep        =  [createmap_cal, combine_data_map, check_Ateam_separation, mk_cal_values_dir, createmap_prepcal, createmap_instcal, create_ateam_model_map, make_sourcedb_ateam, expand_sourcedb_ateam, ndppp_prep_cal, combine_data_cal_map, ms_concat, ms_concat_map, expand_memory_map, aoflag, sky_cal, make_sourcedb, expand_sourcedb, expand_skymodel, calib_cal_parmmap, h5imp_cal_map, smooth_data, predict_cal]
 
 pipeline.steps.PA          =  [calib_cal, h5imp_cal_PA, prepare_losoto_PA, process_losoto_PA, h5exp_cal_PA, apply_PA, apply_beam]
-pipeline.steps.FR          =  [smooth_corrected, calib_cal, h5imp_cal_FR, prepare_losoto_FR, process_losoto_FR, h5exp_cal_FR, apply_FR]
-pipeline.steps.bandpass    =  [smooth_corrected, calib_cal, h5imp_cal_bandpass, prepare_losoto_bandpass, process_losoto_bandpass, h5exp_cal_bandpass, apply_PA, apply_bandpass, apply_beam, apply_FR]
-pipeline.steps.ion         =  [smooth_corrected, calib_cal, h5imp_cal_ion, prepare_losoto_ion, process_losoto_ion, h5exp_cal_ion]
-pipeline.steps.finalize    =  [h5parm_name {{ final_apply }}]
+pipeline.steps.FR          =  [smooth_corrected, calib_cal,  h5imp_cal_FR, prepare_losoto_FR, process_losoto_FR, h5exp_cal_FR, apply_FR]
+pipeline.steps.bandpass    =  [smooth_corrected, calib_cal2, h5imp_cal_bandpass, prepare_losoto_bandpass, prepare_losoto_bandpasstrans, process_losoto_bandpass, h5exp_cal_bandpass, h5parm_name, transfer_solutions, apply_PA, apply_bandpass, apply_beam, apply_FR]
+pipeline.steps.ion         =  [smooth_corrected, calib_cal2, h5imp_cal_ion, prepare_losoto_ion, process_losoto_ion, h5exp_cal_ion]
+pipeline.steps.finalize    =  [h5parm_name {{ final_apply }}, make_summary]
 
 ###############################
 ## Mapping calibrator files  ##
@@ -128,7 +139,7 @@ pipeline.steps.finalize    =  [h5parm_name {{ final_apply }}]
 createmap_cal.control.kind                                  =   plugin
 createmap_cal.control.type                                  =   createMapfile
 createmap_cal.control.method                                =   mapfile_from_folder
-createmap_cal.control.mapfile_dir                           =   input.output.mapfile_dir
+createmap_cal.control.mapfile_dir                           =   {{ mapfile_dir }}
 createmap_cal.control.filename                              =   createmap_cal.mapfile
 createmap_cal.control.folder                                =   {{ cal_input_path }}
 createmap_cal.control.pattern                               =   {{ cal_input_pattern }}
@@ -137,7 +148,7 @@ createmap_cal.control.pattern                               =   {{ cal_input_pat
 combine_data_map.control.kind                               =   plugin
 combine_data_map.control.type                               =   createMapfile
 combine_data_map.control.method                             =   mapfile_all_to_one
-combine_data_map.control.mapfile_dir                        =   input.output.mapfile_dir
+combine_data_map.control.mapfile_dir                        =   {{ mapfile_dir }}
 combine_data_map.control.filename                           =   combine_data_map.mapfile
 combine_data_map.control.mapfile_in                         =   createmap_cal.output.mapfile
 
@@ -147,6 +158,7 @@ check_Ateam_separation.control.executable                   =   {{ scripts }}/ch
 check_Ateam_separation.control.mapfile_in                   =   combine_data_map.output.mapfile
 check_Ateam_separation.control.inputkey                     =   MSfile
 check_Ateam_separation.argument.min_separation              =   {{ min_separation }}
+check_Ateam_separation.argument.outputimage                 =   {{ inspection_directory }}/A-Team_elevation_calibrator.png
 check_Ateam_separation.argument.flags                       =   [MSfile]
 
 #############################
@@ -155,10 +167,10 @@ check_Ateam_separation.argument.flags                       =   [MSfile]
 # generate a mapfile of the calibrator
 createmap_prepcal.control.kind                              =   plugin
 createmap_prepcal.control.type                              =   makeResultsMapfile
-createmap_prepcal.control.mapfile_dir                       =   input.output.mapfile_dir
+createmap_prepcal.control.mapfile_dir                       =   {{ mapfile_dir }}
 createmap_prepcal.control.filename                          =   createmap_prepcal.mapfile
 createmap_prepcal.control.mapfile_in                        =   createmap_cal.output.mapfile
-createmap_prepcal.control.target_dir                        =   {{ job_directory }}
+createmap_prepcal.control.target_dir                        =   {{ working_directory }}
 createmap_prepcal.control.make_target_dir                   =   False
 createmap_prepcal.control.new_suffix                        =   .ndppp_prep_cal
 
@@ -174,7 +186,7 @@ create_ateam_model_map.control.kind                         =   plugin
 create_ateam_model_map.control.type                         =   addListMapfile
 create_ateam_model_map.control.hosts                        =   ['localhost']
 create_ateam_model_map.control.files                        =   [ {{ A-team_skymodel }} ]
-create_ateam_model_map.control.mapfile_dir                  =   input.output.mapfile_dir
+create_ateam_model_map.control.mapfile_dir                  =   {{ mapfile_dir }}
 create_ateam_model_map.control.filename                     =   ateam_model_name.mapfile
 
 # make sourcedbs from the A-Team skymodel, length = 1
@@ -194,7 +206,7 @@ expand_sourcedb_ateam.control.kind                          =   plugin
 expand_sourcedb_ateam.control.type                          =   expandMapfile
 expand_sourcedb_ateam.control.mapfile_in                    =   make_sourcedb_ateam.output.mapfile
 expand_sourcedb_ateam.control.mapfile_to_match              =   createmap_cal.output.mapfile
-expand_sourcedb_ateam.control.mapfile_dir                   =   input.output.mapfile_dir
+expand_sourcedb_ateam.control.mapfile_dir                   =   {{ mapfile_dir }}
 expand_sourcedb_ateam.control.filename                      =   expand_sourcedb_ateam.datamap
 
 
@@ -220,7 +232,7 @@ ndppp_prep_cal.argument.msout.writefullresflag              =   False
 ndppp_prep_cal.argument.msout.overwrite                     =   True
 ndppp_prep_cal.argument.msout.storagemanager                =   "Dysco"
 ndppp_prep_cal.argument.msout.storagemanager.databitrate    =   0
-ndppp_prep_cal.argument.steps                               =   [{{ initial_flagging }},{{ demix_step }}interp,avg]
+ndppp_prep_cal.argument.steps                               =   [{{ initial_flagging }},{{ demix_step }}avg]
 ndppp_prep_cal.argument.flagedge.type                       =   preflagger
 ndppp_prep_cal.argument.flagedge.chan                       =   [0..nchan/32-1,31*nchan/32..nchan-1] # we are running on a single subband
 ndppp_prep_cal.argument.aoflag.type                         =   aoflagger
@@ -232,14 +244,11 @@ ndppp_prep_cal.argument.flagelev.type                       =   preflagger
 ndppp_prep_cal.argument.flagelev.elevation                  =   0deg..20deg
 ndppp_prep_cal.argument.flagamp.type                        =   preflagger
 ndppp_prep_cal.argument.flagamp.amplmin                     =   1e-30
-ndppp_prep_cal.argument.interp.type                         =   interpolate
-ndppp_prep_cal.argument.interp.windowsize                   =   {{ interp_windowsize }}
 ndppp_prep_cal.argument.avg.type                            =   average
 ndppp_prep_cal.argument.avg.timeresolution                  =   {{ avg_timeresolution }}
 ndppp_prep_cal.argument.avg.freqresolution                  =   {{ avg_freqresolution }}
-ndppp_prep_cal.argument.flagamp.type                        =   preflagger
-ndppp_prep_cal.argument.flagamp.amplmin                     =   1e-30
 ndppp_prep_cal.argument.demix.type                          =   demixer
+ndppp_prep_cal.argument.demix.baseline                      =   {{ process_baselines_cal }}
 ndppp_prep_cal.argument.demix.demixfreqstep                 =   {{ demix_freqstep }}
 ndppp_prep_cal.argument.demix.demixtimestep                 =   {{ demix_timestep }}
 ndppp_prep_cal.argument.demix.ignoretarget                  =   False
@@ -255,7 +264,7 @@ ndppp_prep_cal.argument.demix.instrumentmodel               =   createmap_instca
 combine_data_cal_map.control.kind                           =   plugin
 combine_data_cal_map.control.type                           =   createMapfile
 combine_data_cal_map.control.method                         =   mapfile_all_to_one
-combine_data_cal_map.control.mapfile_dir                    =   input.output.mapfile_dir
+combine_data_cal_map.control.mapfile_dir                    =   {{ mapfile_dir }}
 combine_data_cal_map.control.filename                       =   combine_data_cal_map.mapfile
 combine_data_cal_map.control.mapfile_in                     =   ndppp_prep_cal.output.mapfile
 
@@ -264,8 +273,10 @@ ms_concat.control.type                                      =   pythonplugin
 ms_concat.control.executable                                =   {{ scripts }}/concat_MS.py
 ms_concat.control.error_tolerance                           =   {{ error_tolerance }}
 ms_concat.argument.filename                                 =   concatmapfile.mapfile
-ms_concat.argument.mapfile_dir                              =   input.output.mapfile_dir
-ms_concat.argument.flags                                    =   [combine_data_cal_map.output.mapfile,outputkey,{{ min_length }}]
+ms_concat.argument.mapfile_dir                              =   {{ mapfile_dir }}
+ms_concat.argument.min_length                               =   {{ min_length }}
+ms_concat.argument.overhead                                 =   {{ overhead }}
+ms_concat.argument.flags                                    =   [combine_data_cal_map.output.mapfile,outputkey]
 
 # convert the output of ms_concat into usable mapfiles
 ms_concat_map.control.kind                                  =   plugin
@@ -277,7 +288,7 @@ expand_memory_map.control.kind                              =   plugin
 expand_memory_map.control.type                              =   expandMapfile
 expand_memory_map.control.mapfile_in                        =   ms_concat.output.memory.mapfile
 expand_memory_map.control.mapfile_to_match                  =   ms_concat_map.output.concatmap
-expand_memory_map.control.mapfile_dir                       =   input.output.mapfile_dir
+expand_memory_map.control.mapfile_dir                       =   {{ mapfile_dir }}
 expand_memory_map.control.filename                          =   expand_memory_map.mapfile
 
 # run aoflagger on the concatenated data
@@ -299,6 +310,7 @@ sky_cal.control.executable                                  =   {{ scripts }}/fi
 sky_cal.control.error_tolerance                             =   {{ error_tolerance }}
 sky_cal.argument.flags                                      =   [combine_data_cal_map.output.mapfile]
 sky_cal.argument.DirSkymodelCal                             =   {{ calibrator_path_skymodel }}
+sky_cal.argument.max_separation_arcmin                      =   {{ max_separation_arcmin }}
 
 # make the sourcedb
 make_sourcedb.control.kind                                  =   recipe
@@ -317,7 +329,7 @@ expand_sourcedb.control.kind                                =   plugin
 expand_sourcedb.control.type                                =   expandMapfile
 expand_sourcedb.control.mapfile_in                          =   make_sourcedb.output.mapfile
 expand_sourcedb.control.mapfile_to_match                    =   ndppp_prep_cal.output.mapfile
-expand_sourcedb.control.mapfile_dir                         =   input.output.mapfile_dir
+expand_sourcedb.control.mapfile_dir                         =   {{ mapfile_dir }}
 expand_sourcedb.control.filename                            =   expand_sourcedb.mapfile
 
 # expand the sourcedb mapfile so that there is one entry for every file, length = nfiles
@@ -325,7 +337,7 @@ expand_skymodel.control.kind                                =   plugin
 expand_skymodel.control.type                                =   expandMapfile
 expand_skymodel.control.mapfile_in                          =   sky_cal.output.SkymodelName.mapfile
 expand_skymodel.control.mapfile_to_match                    =   ndppp_prep_cal.output.mapfile
-expand_skymodel.control.mapfile_dir                         =   input.output.mapfile_dir
+expand_skymodel.control.mapfile_dir                         =   {{ mapfile_dir }}
 expand_skymodel.control.filename                            =   expand_skymodel.mapfile
 
 # generate mapfile with the h5parm names to be used in the calib_cal steps
@@ -334,34 +346,17 @@ calib_cal_parmmap.control.type                              =   createMapfile
 calib_cal_parmmap.control.method                            =   add_suffix_to_file
 calib_cal_parmmap.control.mapfile_in                        =   ndppp_prep_cal.output.mapfile
 calib_cal_parmmap.control.add_suffix_to_file                =   /instrument.h5
-calib_cal_parmmap.control.mapfile_dir                       =   input.output.mapfile_dir
+calib_cal_parmmap.control.mapfile_dir                       =   {{ mapfile_dir }}
 calib_cal_parmmap.control.filename                          =   calib_cal_h5parms.mapfile
 
 # generate a mapfile with all files in a single entry
 h5imp_cal_map.control.kind                                  =   plugin
 h5imp_cal_map.control.type                                  =   compressMapfile
 h5imp_cal_map.control.mapfile_in                            =   calib_cal_parmmap.output.mapfile
-h5imp_cal_map.control.mapfile_dir                           =   input.output.mapfile_dir
+h5imp_cal_map.control.mapfile_dir                           =   {{ mapfile_dir }}
 h5imp_cal_map.control.filename                              =   h5imp_cal_map.mapfile
 
-# interpolate after flagging but before smoothing
-interp_cal.control.type                                     =   dppp
-interp_cal.control.inplace                                  =   True
-interp_cal.control.max_per_node                             =   {{ num_proc_per_node_limit }}
-interp_cal.control.error_tolerance                          =   {{ error_tolerance }}
-interp_cal.control.mapfile_in                               =   ndppp_prep_cal.output.mapfile
-interp_cal.control.inputkey                                 =   msfile
-interp_cal.argument.msin                                    =   msfile
-interp_cal.argument.numthreads                              =   {{ max_dppp_threads }}
-interp_cal.argument.msin.datacolumn                         =   DATA
-interp_cal.argument.msout.datacolumn                        =   INTERP_DATA
-interp_cal.argument.msout.storagemanager                    =   "Dysco"
-interp_cal.argument.msout.storagemanager.databitrate        =   0
-interp_cal.argument.steps                                   =   [interp]
-interp_cal.argument.interp.type                             =   interpolate
-interp_cal.argument.interp.windowsize                       =   {{ interp_windowsize }}
-
-# baseline-dependent smooting
+# baseline-dependent smoothing
 smooth_data.control.type                                    =   executable_args
 smooth_data.control.inplace                                 =   True
 smooth_data.control.max_per_node                            =   {{ num_proc_per_node }}
@@ -369,9 +364,9 @@ smooth_data.control.error_tolerance                         =   {{ error_toleran
 smooth_data.control.executable                              =   {{ scripts }}/BLsmooth.py
 smooth_data.control.mapfile_in                              =   ndppp_prep_cal.output.mapfile
 smooth_data.control.inputkey                                =   msin
-smooth_data.argument.flags                                  =   [-S,{{ do_smooth }},-r,-i,INTERP_DATA,-o,SMOOTHED_DATA,msin]
+smooth_data.argument.flags                                  =   [-S,{{ do_smooth }},-r,-i,DATA,-o,SMOOTHED_DATA,msin]
 
-# baseline-dependent smooting
+# baseline-dependent smoothing
 smooth_corrected.control.type                               =   executable_args
 smooth_corrected.control.inplace                            =   True
 smooth_corrected.control.max_per_node                       =   {{ num_proc_per_node }}
@@ -407,8 +402,6 @@ calib_cal.control.type                                      =   dppp
 calib_cal.control.inplace                                   =   True
 calib_cal.control.max_per_node                              =   {{ num_proc_per_node_limit }}
 calib_cal.control.error_tolerance                           =   {{ error_tolerance }}
-# calib_cal.control.mapfiles_in                               =   [ndppp_prep_cal.output.mapfile,expand_sourcedb.output.mapfile,calib_cal_parmmap.output.mapfile]
-# calib_cal.control.inputkeys                                 =   [msfile,sourcedb,h5parm]
 calib_cal.control.mapfiles_in                               =   [ndppp_prep_cal.output.mapfile,calib_cal_parmmap.output.mapfile]
 calib_cal.control.inputkeys                                 =   [msfile,h5parm]
 calib_cal.argument.msin                                     =   msfile
@@ -419,36 +412,41 @@ calib_cal.argument.solve.type                               =   ddecal
 calib_cal.argument.solve.mode                               =   rotation+diagonal
 calib_cal.argument.solve.h5parm                             =   h5parm
 calib_cal.argument.solve.usemodelcolumn                     =   True
-# calib_cal.argument.solve.sourcedb                           =   sourcedb
 calib_cal.argument.solve.uvlambdamin                        =   300
 calib_cal.argument.solve.maxiter                            =   50
 calib_cal.argument.solve.nchan                              =   1
 calib_cal.argument.solve.solint                             =   1
 calib_cal.argument.solve.propagatesolutions                 =   {{ propagatesolutions }}
+calib_cal.argument.solve.propagateconvergedonly             =   True
+calib_cal.argument.solve.flagunconverged                    =   {{ flagunconverged }}
+calib_cal.argument.solve.flagdivergedonly                   =   True
 calib_cal.argument.solve.tolerance                          =   1e-3
 
 # now run NDPPP on the averaged calibrator data (diagonal only)
-# calib_cal2.control.type                                     =   dppp
-# calib_cal2.control.inplace                                  =   True
-# calib_cal2.control.max_per_node                             =   {{ num_proc_per_node_limit }}
-# calib_cal2.control.error_tolerance                          =   {{ error_tolerance }}
-# calib_cal2.control.mapfiles_in                              =   [ndppp_prep_cal.output.mapfile,expand_sourcedb.output.mapfile,calib_cal_parmmap.output.mapfile]
-# calib_cal2.control.inputkeys                                =   [msfile,sourcedb,h5parm]
-# calib_cal2.argument.msin                                    =   msfile
-# calib_cal2.argument.numthreads                              =   {{ max_dppp_threads }}
-# calib_cal2.argument.msin.datacolumn                         =   SMOOTHED_DATA
-# calib_cal2.argument.steps                                   =   [solve]
-# calib_cal2.argument.solve.type                              =   ddecal
-# calib_cal2.argument.solve.mode                              =   diagonal
-# calib_cal2.argument.solve.h5parm                            =   h5parm
-# calib_cal2.argument.solve.usemodelcolumn                    =   True
-# # calib_cal2.argument.solve.sourcedb                          =   sourcedb
-# calib_cal2.argument.solve.uvlambdamin                       =   300
-# calib_cal2.argument.solve.maxiter                           =   50
-# calib_cal2.argument.solve.nchan                             =   1
-# calib_cal2.argument.solve.solint                            =   1
-# calib_cal2.argument.solve.propagatesolutions                =   True
-# calib_cal2.argument.solve.tolerance                         =   1e-3
+calib_cal2.control.type                                     =   dppp
+calib_cal2.control.inplace                                  =   True
+calib_cal2.control.max_per_node                             =   {{ num_proc_per_node_limit }}
+calib_cal2.control.error_tolerance                          =   {{ error_tolerance }}
+calib_cal2.control.mapfiles_in                              =   [ndppp_prep_cal.output.mapfile,calib_cal_parmmap.output.mapfile]
+calib_cal2.control.inputkeys                                =   [msfile,h5parm]
+calib_cal2.argument.msin                                    =   msfile
+calib_cal2.argument.numthreads                              =   {{ max_dppp_threads }}
+calib_cal2.argument.msin.datacolumn                         =   SMOOTHED_DATA
+calib_cal2.argument.steps                                   =   [solve]
+calib_cal2.argument.solve.type                              =   ddecal
+calib_cal2.argument.solve.mode                              =   diagonal
+calib_cal2.argument.solve.h5parm                            =   h5parm
+calib_cal2.argument.solve.usemodelcolumn                    =   True
+calib_cal2.argument.solve.uvlambdamin                       =   300
+calib_cal2.argument.solve.maxiter                           =   50
+calib_cal2.argument.solve.nchan                             =   1
+calib_cal2.argument.solve.solint                            =   1
+calib_cal2.argument.solve.propagatesolutions                =   {{ propagatesolutions }}
+calib_cal2.argument.solve.propagateconvergedonly            =   True
+calib_cal2.argument.solve.flagunconverged                   =   {{ flagunconverged }}
+calib_cal2.argument.solve.flagdivergedonly                  =   True
+calib_cal2.argument.solve.tolerance                         =   1e-3
+
 
 ###########################
 ## calibrate Pol. Align  ##
@@ -461,14 +459,14 @@ h5imp_cal_PA.control.error_tolerance                        =   {{ error_toleran
 h5imp_cal_PA.control.mapfile_in                             =   h5imp_cal_map.output.mapfile
 h5imp_cal_PA.control.inputkey                               =   h5parm
 h5imp_cal_PA.control.outputkey                              =   outh5parm
-h5imp_cal_PA.argument.flags                                 =   [-c,h5parm]
+h5imp_cal_PA.argument.flags                                 =   [-q,-v,-c,h5parm]
 h5imp_cal_PA.argument.outh5parm                             =   outh5parm
 
 # create losoto v2 parset file
 prepare_losoto_PA.control.kind                              =   plugin
 prepare_losoto_PA.control.type                              =   makeLosotoParset
 prepare_losoto_PA.control.steps                             =   [plotP3,plotPd,plotRot3,plotA3,bkp,align,plotAlign,residual,plotPr,plotPr2]
-prepare_losoto_PA.control.filename                          =   input.output.job_directory/losoto.parset
+prepare_losoto_PA.control.filename                          =   {{ job_directory }}/losoto.parset
 prepare_losoto_PA.control.global.ncpu                       =   {{ num_proc_per_node }}
 prepare_losoto_PA.control.plotP3.operation                  =   PLOT
 prepare_losoto_PA.control.plotP3.soltab                     =   sol000/phase000
@@ -549,7 +547,7 @@ process_losoto_PA.control.executable                        =   {{ losoto_direct
 process_losoto_PA.control.max_per_node                      =   {{ num_proc_per_node }}
 process_losoto_PA.control.mapfile_in                        =   h5imp_cal_PA.output.mapfile
 process_losoto_PA.control.inputkey                          =   h5in
-process_losoto_PA.argument.flags                            =   [h5in,input.output.job_directory/losoto.parset]
+process_losoto_PA.argument.flags                            =   [-v,h5in,{{ job_directory }}/losoto.parset]
 
 # output the final soltab into an external h5parm
 h5exp_cal_PA.control.kind                                   =   recipe
@@ -559,7 +557,7 @@ h5exp_cal_PA.control.executable                             =   {{ losoto_direct
 h5exp_cal_PA.control.error_tolerance                        =   {{ error_tolerance }}
 h5exp_cal_PA.control.mapfile_in                             =   h5imp_cal_PA.output.mapfile
 h5exp_cal_PA.control.inputkey                               =   h5in
-h5exp_cal_PA.argument.flags                                 =   [h5in]
+h5exp_cal_PA.argument.flags                                 =   [-q,-v,h5in]
 h5exp_cal_PA.argument.insoltab                              =   polalign
 h5exp_cal_PA.argument.outh5parm                             =   {{ cal_solutions }}
 h5exp_cal_PA.argument.outsolset                             =   calibrator
@@ -575,14 +573,14 @@ h5imp_cal_FR.control.error_tolerance                        =   {{ error_toleran
 h5imp_cal_FR.control.mapfile_in                             =   h5imp_cal_map.output.mapfile
 h5imp_cal_FR.control.inputkey                               =   h5parm
 h5imp_cal_FR.control.outputkey                              =   outh5parm
-h5imp_cal_FR.argument.flags                                 =   [-c,h5parm]
+h5imp_cal_FR.argument.flags                                 =   [-q,-v,-c,h5parm]
 h5imp_cal_FR.argument.outh5parm                             =   outh5parm
 
 # create losoto v2 parset file
 prepare_losoto_FR.control.kind                              =   plugin
 prepare_losoto_FR.control.type                              =   makeLosotoParset
 prepare_losoto_FR.control.steps                             =   [plotP3,plotPd,plotRot3,plotA3,faraday,plotFR,residual,plotPr,plotPr2]
-prepare_losoto_FR.control.filename                          =   input.output.job_directory/losoto.parset
+prepare_losoto_FR.control.filename                          =   {{ job_directory }}/losoto.parset
 prepare_losoto_FR.control.global.ncpu                       =   {{ num_proc_per_node }}
 prepare_losoto_FR.control.plotP3.operation                  =   PLOT
 prepare_losoto_FR.control.plotP3.soltab                     =   sol000/phase000
@@ -654,7 +652,7 @@ process_losoto_FR.control.executable                        =   {{ losoto_direct
 process_losoto_FR.control.max_per_node                      =   {{ num_proc_per_node }}
 process_losoto_FR.control.mapfile_in                        =   h5imp_cal_FR.output.mapfile
 process_losoto_FR.control.inputkey                          =   h5in
-process_losoto_FR.argument.flags                            =   [h5in,input.output.job_directory/losoto.parset]
+process_losoto_FR.argument.flags                            =   [-v,h5in,{{ job_directory }}/losoto.parset]
 
 # output the final soltab into an external h5parm
 h5exp_cal_FR.control.kind                                   =   recipe
@@ -664,7 +662,7 @@ h5exp_cal_FR.control.executable                             =   {{ losoto_direct
 h5exp_cal_FR.control.error_tolerance                        =   {{ error_tolerance }}
 h5exp_cal_FR.control.mapfile_in                             =   h5imp_cal_FR.output.mapfile
 h5exp_cal_FR.control.inputkey                               =   h5in
-h5exp_cal_FR.argument.flags                                 =   [h5in]
+h5exp_cal_FR.argument.flags                                 =   [-q,-v,h5in]
 h5exp_cal_FR.argument.insoltab                              =   faraday
 h5exp_cal_FR.argument.outh5parm                             =   {{ cal_solutions }}
 h5exp_cal_FR.argument.outsolset                             =   calibrator
@@ -680,14 +678,14 @@ h5imp_cal_bandpass.control.error_tolerance                  =   {{ error_toleran
 h5imp_cal_bandpass.control.mapfile_in                       =   h5imp_cal_map.output.mapfile
 h5imp_cal_bandpass.control.inputkey                         =   h5parm
 h5imp_cal_bandpass.control.outputkey                        =   outh5parm
-h5imp_cal_bandpass.argument.flags                           =   [-c,h5parm]
+h5imp_cal_bandpass.argument.flags                           =   [-q,-v,-c,h5parm]
 h5imp_cal_bandpass.argument.outh5parm                       =   outh5parm
 
 # create losoto v2 parset file
 prepare_losoto_bandpass.control.kind                        =   plugin
 prepare_losoto_bandpass.control.type                        =   makeLosotoParset
-prepare_losoto_bandpass.control.steps                       =   [duplicateAbkp,plotA1,flag,flagextend,flagbp,plotA2,merge,bandpass,smooth,interp,plotB1,plotB2,plotB3] # NOTE: you may need to remove the flagbp portion of 'prepare_losoto_bandpass' step if you find that your international stations are being flagged
-prepare_losoto_bandpass.control.filename                    =   input.output.job_directory/losoto.parset
+prepare_losoto_bandpass.control.steps                       =   [duplicateAbkp,plotA1,flag,flagbp,flagextend,plotA2,merge,smooth,bandpass,interp,smoothb,plotB1,plotB2,plotB3]
+prepare_losoto_bandpass.control.filename                    =   {{ job_directory }}/losoto.parset
 prepare_losoto_bandpass.control.global.ncpu                 =   {{ num_proc_per_node }}
 prepare_losoto_bandpass.control.duplicateAbkp.operation     =   DUPLICATE
 prepare_losoto_bandpass.control.duplicateAbkp.soltab        =   sol000/amplitude000
@@ -700,24 +698,24 @@ prepare_losoto_bandpass.control.plotA1.plotFlag             =   True
 prepare_losoto_bandpass.control.plotA1.prefix               =   {{ inspection_directory }}/ampBFlag_
 prepare_losoto_bandpass.control.flag.operation              =   FLAG
 prepare_losoto_bandpass.control.flag.soltab                 =   sol000/amplitude000
-prepare_losoto_bandpass.control.flag.axesToFlag             =   [time]
-prepare_losoto_bandpass.control.flag.order                  =   [100]
+prepare_losoto_bandpass.control.flag.axesToFlag             =   [time,freq]
+prepare_losoto_bandpass.control.flag.order                  =   [100,40]
 prepare_losoto_bandpass.control.flag.maxCycles              =   1
 prepare_losoto_bandpass.control.flag.maxRms                 =   5
 prepare_losoto_bandpass.control.flag.replace                =   False
 prepare_losoto_bandpass.control.flag.preFlagZeros           =   False
 prepare_losoto_bandpass.control.flag.mode                   =   smooth
-prepare_losoto_bandpass.control.flagextend.operation        =   FLAGEXTEND
-prepare_losoto_bandpass.control.flagextend.soltab           =   sol000/amplitude000
-prepare_losoto_bandpass.control.flagextend.axesToExt        =   [freq,time]
-prepare_losoto_bandpass.control.flagextend.size             =   [50,100]
-prepare_losoto_bandpass.control.flagextend.percent          =   50
-prepare_losoto_bandpass.control.flagextend.maxCycles        =   3
 prepare_losoto_bandpass.control.flagbp.operation            =   FLAGSTATION
 prepare_losoto_bandpass.control.flagbp.soltab               =   sol000/amplitude000
 prepare_losoto_bandpass.control.flagbp.mode                 =   bandpass
 prepare_losoto_bandpass.control.flagbp.ampRange             =   {{ ampRange }}
 prepare_losoto_bandpass.control.flagbp.skipInternational    =   {{ skip_international }}
+prepare_losoto_bandpass.control.flagextend.operation        =   FLAGEXTEND
+prepare_losoto_bandpass.control.flagextend.soltab           =   sol000/amplitude000
+prepare_losoto_bandpass.control.flagextend.axesToExt        =   [time,freq]
+prepare_losoto_bandpass.control.flagextend.size             =   [200,80]
+prepare_losoto_bandpass.control.flagextend.percent          =   50
+prepare_losoto_bandpass.control.flagextend.maxCycles        =   2
 prepare_losoto_bandpass.control.plotA2.operation            =   PLOT
 prepare_losoto_bandpass.control.plotA2.soltab               =   sol000/amplitude000
 prepare_losoto_bandpass.control.plotA2.axesInPlot           =   [time,freq]
@@ -728,6 +726,13 @@ prepare_losoto_bandpass.control.merge.operation             =   REWEIGHT
 prepare_losoto_bandpass.control.merge.mode                  =   copy
 prepare_losoto_bandpass.control.merge.soltab                =   sol000/phase000
 prepare_losoto_bandpass.control.merge.soltabImport          =   amplitude000
+prepare_losoto_bandpass.control.smooth.operation            =   SMOOTH
+prepare_losoto_bandpass.control.smooth.soltab               =   sol000/amplitude000
+prepare_losoto_bandpass.control.smooth.pol                  =   XX,YY
+prepare_losoto_bandpass.control.smooth.axesToSmooth         =   [time]
+prepare_losoto_bandpass.control.smooth.mode                 =   median
+prepare_losoto_bandpass.control.smooth.log                  =   True
+prepare_losoto_bandpass.control.smooth.replace              =   False
 prepare_losoto_bandpass.control.bandpass.operation          =   SMOOTH
 prepare_losoto_bandpass.control.bandpass.soltab             =   sol000/amplitude000
 prepare_losoto_bandpass.control.bandpass.pol                =   XX,YY
@@ -736,12 +741,6 @@ prepare_losoto_bandpass.control.bandpass.mode               =   savitzky-golay
 prepare_losoto_bandpass.control.bandpass.size               =   [17]
 prepare_losoto_bandpass.control.bandpass.degree             =   2
 prepare_losoto_bandpass.control.bandpass.log                =   True
-prepare_losoto_bandpass.control.smooth.operation            =   SMOOTH
-prepare_losoto_bandpass.control.smooth.soltab               =   sol000/amplitude000
-prepare_losoto_bandpass.control.smooth.pol                  =   XX,YY
-prepare_losoto_bandpass.control.smooth.axesToSmooth         =   [time]
-prepare_losoto_bandpass.control.smooth.mode                 =   median
-prepare_losoto_bandpass.control.smooth.log                  =   True
 prepare_losoto_bandpass.control.interp.operation            =   INTERPOLATE
 prepare_losoto_bandpass.control.interp.soltab               =   sol000/amplitude000
 prepare_losoto_bandpass.control.interp.outSoltab            =   bandpass
@@ -750,6 +749,13 @@ prepare_losoto_bandpass.control.interp.maxFlaggedWidth      =   {{ max2interpola
 prepare_losoto_bandpass.control.interp.newDelta             =   {{ bandpass_freqresolution }}
 prepare_losoto_bandpass.control.interp.delta                =   {{ avg_freqresolution }}
 prepare_losoto_bandpass.control.interp.log                  =   True
+prepare_losoto_bandpass.control.smoothb.operation           =   SMOOTH
+prepare_losoto_bandpass.control.smoothb.soltab              =   sol000/bandpass
+prepare_losoto_bandpass.control.smoothb.pol                 =   XX,YY
+prepare_losoto_bandpass.control.smoothb.axesToSmooth        =   [time]
+prepare_losoto_bandpass.control.smoothb.mode                =   median
+prepare_losoto_bandpass.control.smoothb.log                 =   True
+prepare_losoto_bandpass.control.smoothb.replace             =   True
 prepare_losoto_bandpass.control.plotB1.operation            =   PLOT
 prepare_losoto_bandpass.control.plotB1.soltab               =   sol000/bandpass
 prepare_losoto_bandpass.control.plotB1.axesInPlot           =   [time,freq]
@@ -771,17 +777,34 @@ prepare_losoto_bandpass.control.plotB3.axisInCol            =   ant
 prepare_losoto_bandpass.control.plotB3.plotFlag             =   True
 prepare_losoto_bandpass.control.plotB3.prefix               =   {{ inspection_directory }}/bandpass_
 prepare_losoto_bandpass.control.plotB3.time.minmaxstep      =   [0,1e20,500000]
-prepare_losoto_bandpass.control.residualA.operation         =   RESIDUALS
-prepare_losoto_bandpass.control.residualA.soltab            =   sol000/amplitude000
-prepare_losoto_bandpass.control.residualA.soltabsToSub      =   bandpass
-prepare_losoto_bandpass.control.residualA.ratio             =   True
-prepare_losoto_bandpass.control.plotAr3.operation           =   PLOT
-prepare_losoto_bandpass.control.plotAr3.soltab              =   sol000/amplitude000
-prepare_losoto_bandpass.control.plotAr3.axesInPlot          =   [time,freq]
-prepare_losoto_bandpass.control.plotAr3.axisInTable         =   ant
-prepare_losoto_bandpass.control.plotAr3.plotFlag            =   True
-prepare_losoto_bandpass.control.plotAr3.prefix              =   {{ inspection_directory }}/bandpass_amp-res
-prepare_losoto_bandpass.control.plotAr3.minmax              =   [-0.5,0.5]
+
+# create losoto v2 parset file
+prepare_losoto_bandpasstrans.control.kind                   =   plugin
+prepare_losoto_bandpasstrans.control.type                   =   makeLosotoParset
+prepare_losoto_bandpasstrans.control.steps                  =   [plotB1,plotB2,plotB3]
+prepare_losoto_bandpasstrans.control.filename               =   {{ job_directory }}/losoto_transfer.parset
+prepare_losoto_bandpasstrans.control.global.ncpu            =   {{ num_proc_per_node }}
+prepare_losoto_bandpasstrans.control.plotB1.operation       =   PLOT
+prepare_losoto_bandpasstrans.control.plotB1.soltab          =   calibrator/bandpass
+prepare_losoto_bandpasstrans.control.plotB1.axesInPlot      =   [time,freq]
+prepare_losoto_bandpasstrans.control.plotB1.axisInTable     =   ant
+prepare_losoto_bandpasstrans.control.plotB1.plotFlag        =   True
+prepare_losoto_bandpasstrans.control.plotB1.prefix          =   {{ inspection_directory }}/bandpass_transfer_
+prepare_losoto_bandpasstrans.control.plotB2.operation       =   PLOT
+prepare_losoto_bandpasstrans.control.plotB2.soltab          =   calibrator/bandpass
+prepare_losoto_bandpasstrans.control.plotB2.axesInPlot      =   freq
+prepare_losoto_bandpasstrans.control.plotB2.axisInTable     =   ant
+prepare_losoto_bandpasstrans.control.plotB2.axisInCol       =   pol
+prepare_losoto_bandpasstrans.control.plotB2.plotFlag        =   True
+prepare_losoto_bandpasstrans.control.plotB2.prefix          =   {{ inspection_directory }}/bandpass_transfer_
+prepare_losoto_bandpasstrans.control.plotB2.time.minmaxstep =   [0,1e20,500000]
+prepare_losoto_bandpasstrans.control.plotB3.operation       =   PLOT
+prepare_losoto_bandpasstrans.control.plotB3.soltab          =   calibrator/bandpass
+prepare_losoto_bandpasstrans.control.plotB3.axesInPlot      =   freq
+prepare_losoto_bandpasstrans.control.plotB3.axisInCol       =   ant
+prepare_losoto_bandpasstrans.control.plotB3.plotFlag        =   True
+prepare_losoto_bandpasstrans.control.plotB3.prefix          =   {{ inspection_directory }}/bandpass_transfer_
+prepare_losoto_bandpasstrans.control.plotB3.time.minmaxstep =   [0,1e20,500000]
 
 # do the processing on the LoSoTo file
 process_losoto_bandpass.control.kind                        =   recipe
@@ -791,7 +814,7 @@ process_losoto_bandpass.control.executable                  =   {{ losoto_direct
 process_losoto_bandpass.control.max_per_node                =   {{ num_proc_per_node }}
 process_losoto_bandpass.control.mapfile_in                  =   h5imp_cal_bandpass.output.mapfile
 process_losoto_bandpass.control.inputkey                    =   h5in
-process_losoto_bandpass.argument.flags                      =   [h5in,input.output.job_directory/losoto.parset]
+process_losoto_bandpass.argument.flags                      =   [-v,h5in,{{ job_directory }}/losoto.parset]
 
 # output the final soltab into an external h5parm
 h5exp_cal_bandpass.control.kind                             =   recipe
@@ -801,11 +824,24 @@ h5exp_cal_bandpass.control.executable                       =   {{ losoto_direct
 h5exp_cal_bandpass.control.error_tolerance                  =   {{ error_tolerance }}
 h5exp_cal_bandpass.control.mapfile_in                       =   h5imp_cal_bandpass.output.mapfile
 h5exp_cal_bandpass.control.inputkey                         =   h5in
-h5exp_cal_bandpass.argument.flags                           =   [h5in]
+h5exp_cal_bandpass.argument.flags                           =   [-q,-v,h5in]
 h5exp_cal_bandpass.argument.insoltab                        =   bandpass
 h5exp_cal_bandpass.argument.outh5parm                       =   {{ cal_solutions }}
 h5exp_cal_bandpass.argument.outsolset                       =   calibrator
 
+# transfer solutions if necessary
+transfer_solutions.control.type                             =   pythonplugin
+transfer_solutions.control.executable                       =   {{ scripts }}/transfer_solutions.py
+transfer_solutions.control.error_tolerance                  =   {{ error_tolerance }}
+transfer_solutions.control.skip_infile                      =   True
+transfer_solutions.control.mapfile_in                       =   sky_cal.output.SkymodelName.mapfile
+transfer_solutions.argument.flags                           =   [{{ cal_solutions }}, {{ solutions2transfer }}]
+transfer_solutions.argument.insolset                        =   calibrator
+transfer_solutions.argument.outsolset                       =   calibrator
+transfer_solutions.argument.insoltab                        =   bandpass
+transfer_solutions.argument.outsoltab                       =   bandpass
+transfer_solutions.argument.antenna                         =   {{ antennas2transfer }}
+transfer_solutions.argument.parset                          =   {{ job_directory }}/losoto_transfer.parset
 
 ################################
 ## calibrate ionosphere       ##
@@ -818,14 +854,14 @@ h5imp_cal_ion.control.error_tolerance                       =   {{ error_toleran
 h5imp_cal_ion.control.mapfile_in                            =   h5imp_cal_map.output.mapfile
 h5imp_cal_ion.control.inputkey                              =   h5parm
 h5imp_cal_ion.control.outputkey                             =   outh5parm
-h5imp_cal_ion.argument.flags                                =   [-c,h5parm]
+h5imp_cal_ion.argument.flags                                =   [-q,-v,-c,h5parm]
 h5imp_cal_ion.argument.outh5parm                            =   outh5parm
 
 # create losoto v2 parset file
 prepare_losoto_ion.control.kind                             =   plugin
 prepare_losoto_ion.control.type                             =   makeLosotoParset
 prepare_losoto_ion.control.steps                            =   [plotA1,flag,flagextend,plotA2,merge,plotP3,plotPd,duplicatePbkp,{{ cal_ion }},plotClock,plotPr,plotPr3,flagstation]
-prepare_losoto_ion.control.filename                         =   input.output.job_directory/losoto.parset
+prepare_losoto_ion.control.filename                         =   {{ job_directory }}/losoto.parset
 prepare_losoto_ion.control.global.ncpu                      =   {{ num_proc_per_node }}
 prepare_losoto_ion.control.plotA1.operation                 =   PLOT
 prepare_losoto_ion.control.plotA1.soltab                    =   sol000/amplitude000
@@ -835,8 +871,8 @@ prepare_losoto_ion.control.plotA1.plotFlag                  =   True
 prepare_losoto_ion.control.plotA1.prefix                    =   {{ inspection_directory }}/ion_ampBFlag_
 prepare_losoto_ion.control.flag.operation                   =   FLAG
 prepare_losoto_ion.control.flag.soltab                      =   sol000/amplitude000
-prepare_losoto_ion.control.flag.axesToFlag                  =   [time]
-prepare_losoto_ion.control.flag.order                       =   [100]
+prepare_losoto_ion.control.flag.axesToFlag                  =   [time,freq]
+prepare_losoto_ion.control.flag.order                       =   [100,40]
 prepare_losoto_ion.control.flag.maxCycles                   =   1
 prepare_losoto_ion.control.flag.maxRms                      =   5
 prepare_losoto_ion.control.flag.replace                     =   False
@@ -844,10 +880,10 @@ prepare_losoto_ion.control.flag.preFlagZeros                =   False
 prepare_losoto_ion.control.flag.mode                        =   smooth
 prepare_losoto_ion.control.flagextend.operation             =   FLAGEXTEND
 prepare_losoto_ion.control.flagextend.soltab                =   sol000/amplitude000
-prepare_losoto_ion.control.flagextend.axesToExt             =   [freq,time]
-prepare_losoto_ion.control.flagextend.size                  =   [50,100]
+prepare_losoto_ion.control.flagextend.axesToExt             =   [time,freq]
+prepare_losoto_ion.control.flagextend.size                  =   [200,80]
 prepare_losoto_ion.control.flagextend.percent               =   50
-prepare_losoto_ion.control.flagextend.maxCycles             =   3
+prepare_losoto_ion.control.flagextend.maxCycles             =   2
 prepare_losoto_ion.control.plotA2.operation                 =   PLOT
 prepare_losoto_ion.control.plotA2.soltab                    =   sol000/amplitude000
 prepare_losoto_ion.control.plotA2.axesInPlot                =   [time,freq]
@@ -919,6 +955,12 @@ prepare_losoto_ion.control.plotTEC3.axisInTable             =   ant
 prepare_losoto_ion.control.plotTEC3.prefix                  =   {{ inspection_directory }}/tec3rd
 prepare_losoto_ion.control.plotTEC3.plotFlag                =   False
 prepare_losoto_ion.control.plotTEC3.refAnt                  =   {{ refant }}
+prepare_losoto_ion.control.smooth.operation                 =   SMOOTH
+prepare_losoto_ion.control.smooth.soltab                    =   sol000/clock
+prepare_losoto_ion.control.smooth.axesToSmooth              =   [time]
+prepare_losoto_ion.control.smooth.mode                      =   median
+prepare_losoto_ion.control.smooth.log                       =   False
+prepare_losoto_ion.control.smooth.replace                   =   True
 prepare_losoto_ion.control.residuals.operation              =   RESIDUALS
 prepare_losoto_ion.control.residuals.soltab                 =   sol000/phase000
 prepare_losoto_ion.control.residuals.soltabsToSub           =   [tec,clock]
@@ -944,6 +986,7 @@ prepare_losoto_ion.control.plotPr3.refAnt                   =   {{ refant }}
 prepare_losoto_ion.control.plotPr3.minmax                   =   [-3.14,3.14]
 prepare_losoto_ion.control.flagstation.operation            =   FLAGSTATION
 prepare_losoto_ion.control.flagstation.soltab               =   sol000/phase000
+prepare_losoto_ion.control.flagstation.maxStddev            =   {{ maxStddev }}
 prepare_losoto_ion.control.flagstation.mode                 =   resid
 prepare_losoto_ion.control.flagstation.refAnt               =   {{ refant }}
 prepare_losoto_ion.control.flagstation.soltabExport         =   clock
@@ -956,7 +999,7 @@ process_losoto_ion.control.executable                       =   {{ losoto_direct
 process_losoto_ion.control.max_per_node                     =   {{ num_proc_per_node }}
 process_losoto_ion.control.mapfile_in                       =   h5imp_cal_ion.output.mapfile
 process_losoto_ion.control.inputkey                         =   h5in
-process_losoto_ion.argument.flags                           =   [h5in,input.output.job_directory/losoto.parset]
+process_losoto_ion.argument.flags                           =   [-v,h5in,{{ job_directory }}/losoto.parset]
 
 # output the final soltab into an external h5parm
 h5exp_cal_ion.control.kind                                  =   recipe
@@ -966,7 +1009,7 @@ h5exp_cal_ion.control.executable                            =   {{ losoto_direct
 h5exp_cal_ion.control.error_tolerance                       =   {{ error_tolerance }}
 h5exp_cal_ion.control.mapfile_in                            =   h5imp_cal_ion.output.mapfile
 h5exp_cal_ion.control.inputkey                              =   h5in
-h5exp_cal_ion.argument.flags                                =   [h5in]
+h5exp_cal_ion.argument.flags                                =   [-q,-v,h5in]
 h5exp_cal_ion.argument.insoltab                             =   {{ tables2export }}
 h5exp_cal_ion.argument.outh5parm                            =   {{ cal_solutions }}
 h5exp_cal_ion.argument.outsolset                            =   calibrator
@@ -984,7 +1027,7 @@ apply_PA.control.mapfile_in                                 =   ndppp_prep_cal.o
 apply_PA.control.inputkey                                   =   msfile
 apply_PA.argument.msin                                      =   msfile
 apply_PA.argument.numthreads                                =   {{ max_dppp_threads }}
-apply_PA.argument.msin.datacolumn                           =   INTERP_DATA
+apply_PA.argument.msin.datacolumn                           =   DATA
 apply_PA.argument.msout.datacolumn                          =   CORRECTED_DATA
 apply_PA.argument.msout.storagemanager                      =   "Dysco"
 apply_PA.argument.msout.storagemanager.databitrate          =   0
@@ -1111,10 +1154,21 @@ apply_TEC.argument.applytec.parmdb                          =   {{ cal_solutions
 h5parm_name.control.type                                    =   pythonplugin
 h5parm_name.control.executable                              =   {{ scripts }}/h5parm_pointingname.py
 h5parm_name.control.error_tolerance                         =   {{ error_tolerance }}
-h5parm_name.argument.flags                                  =   [{{ cal_solutions }}]]
+h5parm_name.argument.flags                                  =   [{{ cal_solutions }}]
 h5parm_name.argument.solsetName                             =   calibrator
 h5parm_name.argument.pointing                               =   sky_cal.output.SkymodelName.mapfile
 
+# create a summary
+make_summary.control.type                                   =   pythonplugin
+make_summary.control.executable                             =   {{ scripts }}/make_summary.py
+make_summary.control.error_tolerance                        =   {{ error_tolerance }}
+make_summary.control.mapfile_in                             =   combine_data_cal_map.output.mapfile
+make_summary.control.inputkey                               =   infiles
+make_summary.argument.observation_directory                 =   {{ working_directory }}
+make_summary.argument.logfile                               =   {{ log_file }}
+make_summary.argument.h5parmdb                              =   {{ cal_solutions }}
+make_summary.argument.inspection_directory                  =   {{ inspection_directory }}
+make_summary.argument.MSfile                                =   infiles
 
 ########################################################
 ##                                                    ##

@@ -2,7 +2,7 @@
 import sys
 import glob
 import re
-import pyrap.tables as pt
+import casacore.tables as pt
 import numpy
 import os
 from lofarpipe.support.data_map import DataMap, DataProduct
@@ -42,7 +42,7 @@ def getfilesize(MS):
    pass
 
 ########################################################################
-def main(ms_input, ms_output, min_length, filename=None, mapfile_dir=None):
+def main(ms_input, ms_output, min_length, overhead = 0.8, filename=None, mapfile_dir=None):
 
     """
     Virtually concatenate subbands
@@ -53,6 +53,10 @@ def main(ms_input, ms_output, min_length, filename=None, mapfile_dir=None):
         String from the list (map) of the calibrator MSs
     ms_output : str
         String from the outut concatenated MS
+    min_length : int
+        minimum amount of subbands to concatenate in frequency necessary to perform the wide-band flagging in the RAM. It data is too big aoflag will use indirect-read.
+    overhead   : float
+        Only use this fraction of the available memory for deriving the amount of data to be concatenated.
     filename: str
         Name of output mapfile
     mapfile_dir : str
@@ -62,33 +66,31 @@ def main(ms_input, ms_output, min_length, filename=None, mapfile_dir=None):
     system_memory = getsystemmemory()
     filelist      = input2strlist_nomapfile(ms_input)
     file_size     = getfilesize(filelist[0])
-    overhead      = 0.8
+    overhead      = float(overhead)
 
-    print "Detected available system memory is: " + str(int(((system_memory / 1024. / 1024.) + 0.5))) + " GB" 
+    print("Detected available system memory is: " + str(int(((system_memory / 1024. / 1024.) + 0.5))) + " GB")
     if overhead * system_memory > global_limit:
         system_memory = global_limit
         overhead      = 1.0
-        print "Number of files to concat wil be limited to the global limit of: " + str(int(((global_limit / 1024. / 1024.) + 0.5))) + " GB" 
-        pass    
-    
-    max_space     = int(system_memory / file_size)
-    max_length    = len(filelist) / ((len(filelist) / max_space) + 1)
-    i = 0
+        print("Number of files to concat will be limited to the global limit of: " + str(int(((global_limit / 1024. / 1024.) + 0.5))) + " GB")
 
-    while max_length * file_size > overhead * system_memory:
-        i += 1
-        max_length = len(filelist) / ((len(filelist) / max_space) + i)
-        pass
     
+    max_space     = overhead * system_memory / file_size
+    max_length    = len(filelist) / int((len(filelist) / max_space) + 1.)
+
     if max_length >= int(min_length):
         memory = '-memory-read'
-        pass
     else:
-        max_length = len(filelist)
         memory = '-indirect-read'
-        pass
-        
-    print "The max_length value is: " + str(max_length)    
+        max_length = len(filelist)
+        if max_length * file_size > global_limit:
+            max_space  = global_limit / file_size
+            max_length = len(filelist) / int((len(filelist) / max_space) + 1.)
+            print("Number of files to concat was limited to the global limit of: " + str(int(((global_limit / 1024. / 1024.) + 0.5))) + " GB")
+            print("WARNING: The number of concatenated files will thus be lower than the min_length of: "  + str(min_length))
+    
+    print("Applying an overhead of: " + str(overhead))
+    print("The max_length value is: " + str(max_length))
     set_ranges     = list(numpy.arange(0, len(filelist) + 1, int(max_length)))
     set_ranges[-1] = len(filelist)
 
@@ -102,22 +104,24 @@ def main(ms_input, ms_output, min_length, filename=None, mapfile_dir=None):
     map_out.save(fileid)
     result = {'concatmapfile': fileid, 'memory': memory}
 
-    return result
+    return(result)
 
 ########################################################################
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Virtually concat subbands')
+    parser = argparse.ArgumentParser(description='Virtually concatenate subbands')
 
     parser.add_argument('MSfile', type=str, nargs='+',
                         help='One (or more MSs) that we want to concatenate.')
     parser.add_argument('MSout', type=str,
                         help='Output MS file')
-    parser.add_argument('-min_length', type=str,
+    parser.add_argument('--min_length', type=str,
                         help='Minimum amount of subbands to concatenate in frequency.')
+    parser.add_argument('--overhead', type=float, default=0.8,
+                        help='Only use this fraction of the available memory for deriving the amount of data to be concatenated.')
 
 
 
     args = parser.parse_args()
 
-    main(args.MSfile,args.MSout,args.min_length)
+    main(args.MSfile,args.MSout,args.min_length,args.overhead)

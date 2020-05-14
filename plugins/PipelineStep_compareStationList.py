@@ -43,9 +43,8 @@ def plugin_main(args, **kwargs):
         pass
     
     ## reading ANTENNA table of MS
-    antennaFile  = MS + "/ANTENNA"
     logging.info('Collecting information from the ANTENNA table.')
-    antennaTable = pt.table(antennaFile, ack = False)
+    antennaTable = pt.table(MS + "::ANTENNA", ack = False)
     antennaNames = antennaTable.getcol('NAME')
     
     ## reading ANTENNA information of h5parm
@@ -58,6 +57,8 @@ def plugin_main(args, **kwargs):
     for missing_station in missing_stations:
         filter += ';!' + missing_station + '*'
         pass
+
+    data.close()
     
     ## return results
     result = {'filter':str(filter)}

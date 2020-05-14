@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import glob
-import pyrap.tables as pt
+import casacore.tables as pt
 import math
 import lsmtool
 import numpy
@@ -23,8 +23,8 @@ def grab_pointing(MS):
         NB: we suppose that all the calibrators' observations have this field filled in (MS/Observation, column LOFAR_TARGET)
     """
     
-    [ra, dec] = pt.table(MS+'/FIELD', readonly=True, ack=False).getcol('PHASE_DIR')[0][0] * 180 / math.pi
-    return ra, dec
+    [ra, dec] = pt.table(MS+'::FIELD', readonly=True, ack=False).getcol('PHASE_DIR')[0][0] * 180 / math.pi
+    return(ra, dec)
 
     
 
@@ -39,15 +39,12 @@ def check_skymodel(skymodel, ra, dec, max_separation_arcmin = 1.0):
     if any(dist_deg * 60.0 < max_separation_arcmin):
         patch_position = int(numpy.where(dist_deg * 60 < max_separation_arcmin)[0][0])
         patch_name = s.getPatchNames()[patch_position]
-        return (True, patch_name)
-        pass
+        return(True, patch_name)
     else:
-        return (False, '')
-        pass
-    pass
+        return(False, '')
 
 ########################################################################
-def find_skymodel(ra, dec, PathSkyMod, extensionSky = ".skymodel", max_separation_arcmin = 1.0):
+def find_skymodel(ra, dec, PathSkyMod='/data/skymodels', extensionSky = ".skymodel", max_separation_arcmin = 1.0):
     """
     Find in the provided folder the correponding skymodel for the given source
 
@@ -70,25 +67,21 @@ def find_skymodel(ra, dec, PathSkyMod, extensionSky = ".skymodel", max_separatio
         Full name (with path) to the matching skymodel 
     """
     
-
-    skymodels = glob.glob(PathSkyMod + "/*" + extensionSky)
-    
-    # remove any Ateam models from the listing (only in filenames)
-    #skymodels = [s for s in skymodels if 'Ateam' not in s]
-    #skymodels = [s for s in skymodels if 'A-Team' not in s]
-    
+    if os.path.isfile(PathSkyMod):
+        print("Checking the skymodel provided: " + PathSkyMod)
+        skymodels = [PathSkyMod]
+    else:
+        skymodels = glob.glob(PathSkyMod + "/*" + extensionSky)
+        
     for skymodel in skymodels:
         check = check_skymodel(skymodel, ra, dec, max_separation_arcmin)
         if check[0]:
-            print "The following skymodel will be used for the calibrator: " + skymodel.split("/")[-1] + " (in " + PathSkyMod + ")"
-            return (skymodel, check[-1])
-            pass
+            print("The following skymodel will be used for the calibrator: " + skymodel.split("/")[-1] + " (in " + PathSkyMod + ")")
+            return(skymodel, check[-1])
         else:
             pass
-        pass
     
     raise TypeError('find_skymodel: SKYMODEL FOR THE CALIBRATOR NOT FOUND IN ' + PathSkyMod)
-    pass
             
 ########################################################################
 def input2strlist_nomapfile(invar):
@@ -132,11 +125,8 @@ def main(ms_input, DirSkymodelCal, extensionSky=".skymodel", max_separation_arcm
         Path to the skymodel of the calibrator
     """    
 
-    if os.path.isfile(DirSkymodelCal):
-        print "Using the skymodel provided: " + DirSkymodelCal
-        return { 'SkymodelCal' : DirSkymodelCal }
-        
-    elif os.path.isdir(DirSkymodelCal):
+    max_separation_arcmin = float(max_separation_arcmin) 
+    if os.path.isfile(DirSkymodelCal) or os.path.isdir(DirSkymodelCal):
         ra, dec = grab_pointing(input2strlist_nomapfile(ms_input)[0])
         skymodelCal, skymodelName  = find_skymodel(ra, dec, DirSkymodelCal, extensionSky, max_separation_arcmin)
         return { 'SkymodelCal' : skymodelCal, 'SkymodelName': skymodelName}
@@ -151,16 +141,24 @@ if __name__ == '__main__':
     
     parser.add_argument('MSfile', type=str, nargs='+',
                         help='One (or more MSs) for which we search the matching skymodel.')
-    parser.add_argument('DirSky', type=str, 
+    parser.add_argument('--DirSky', type=str, 
                         help='Path to the skymodel file, or to the folder where the skymodels are stored.')
+    parser.add_argument('--max_separation_arcmin', type=str, 
+                        help='define the maximum seperation between pointing and model direction in arcmin.')
     parser.add_argument('--extsky', type=str, 
                         help='extension of the skymodel files. (default: \".skymodel\")')
         
     args = parser.parse_args()
-    extensionSky='.skymodel'
+    extensionSky = '.skymodel'
+    DirSkymodelCal = '/data/skymodels'
+    max_separation_arcmin = 1.0
     if args.extsky:
         extensionSky=args.extsky
+    if args.DirSky:
+        DirSkymodelCal = args.DirSky
+    if args.max_separation_arcmin:
+        max_separation_arcmin = args.max_separation_arcmin
     
-    main(args.MSfile,args.DirSky, extensionSky)
+    main(args.MSfile, DirSkymodelCal, extensionSky, max_separation_arcmin)
     
     pass

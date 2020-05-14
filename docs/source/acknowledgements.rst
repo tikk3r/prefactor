@@ -3,11 +3,15 @@
 Acknowledgements
 ================
 
-The Pre-Facet-Calibration pipeline and its scripts where developed by:
+The Pre-Facet-Calibration pipeline and its scripts were developed by:
 
     * Alexander Drabent
     * David Rafferty
     * Andreas Horneffer
+    * Francesco de Gasperin
+    * Marco Iacobelli
+    * Emanuela Orru
+    * Björn Adebahr
     * Martin Hardcastle
     * George Heald
     * Soumyajit Mandal

@@ -9,18 +9,16 @@ from os.path import join
 def makesolset(MS, data, solset_name):
     solset = data.makeSolset(solset_name)    
 
-    antennaFile = MS + "/ANTENNA"
     logging.info('Collecting information from the ANTENNA table.')
-    antennaTable = pt.table(antennaFile, ack=False)
+    antennaTable = pt.table(MS + "::ANTENNA", ack=False)
     antennaNames = antennaTable.getcol('NAME')
     antennaPositions = antennaTable.getcol('POSITION')
     antennaTable.close()
     antennaTable = solset.obj._f_get_child('antenna')
     antennaTable.append(zip(*(antennaNames,antennaPositions)))
     
-    fieldFile = MS + "/FIELD"
     logging.info('Collecting information from the FIELD table.')
-    fieldTable = pt.table(fieldFile, ack=False)
+    fieldTable = pt.table(MS + "::FIELD", ack=False)
     phaseDir = fieldTable.getcol('PHASE_DIR')
     pointing = phaseDir[0, 0, :]
     fieldTable.close()
@@ -99,6 +97,7 @@ def main(MSfiles, h5parmfile, store_basename='caldata_transfer', store_directory
                                         axesVals=[freqs_phase, station_names],
                                         vals=phases_array, weights=weights_phase)
 
+    data.close()
     return(0)
 
 

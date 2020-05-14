@@ -28,6 +28,8 @@ It will prepare your data so that you will be able to use any direction-dependen
     by users. For the production version, intended for automated
     processing on CEP4/LTA sites, see the documentation on the production branch.
 
+    **NOTE:** The use of **prefactor** for the processing of long baselines (international stations) is not yet fully tested and thus **experimental**. Do not expect decent results if you use **prefactor** including long baselines.
+
 Introduction
 ------------
 
@@ -35,7 +37,6 @@ Introduction
    :maxdepth: 2
 
    acknowledgements
-   capabilities
 
 
 Obtaining Prefactor
@@ -69,7 +70,9 @@ The Prefactor Pipelines
    pipelineoverview
    calibrator
    target
+   concatenate
    initsubtract
+   image
 
 
 .. _TGSS ADR: https://http://tgssadr.strw.leidenuniv.nl/
